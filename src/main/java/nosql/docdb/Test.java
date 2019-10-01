@@ -7,6 +7,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import lombok.Value;
+import nosql.docdb.web_application.ServletServer;
 import org.bson.Document;
 
 public class Test {
@@ -18,12 +19,12 @@ public class Test {
 
         SimpleDocument document=new SimpleDocument("Вася","Дневник",100);
 
-
         collection.insertOne(Document.parse(gson.toJson(document)));
 
         SimpleDocument documentInBase=gson.fromJson(collection.find().first().toJson(),SimpleDocument.class);
-
         System.out.println(documentInBase);
+
+        ServletServer.startServer();
     }
 
     @Value
@@ -32,4 +33,5 @@ public class Test {
         String title;
         long length;
     }
+
 }

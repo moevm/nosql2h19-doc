@@ -11,7 +11,18 @@
     <properties>
         <maven.compiler.source>1.10</maven.compiler.source>
         <maven.compiler.target>1.10</maven.compiler.target>
+
+        <vaadin.widgetset.mode>cdn</vaadin.widgetset.mode>
+        <vaadin.version>8.8.2</vaadin.version>
+        <jetty.version>9.2.3.v20140905</jetty.version>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>vaadin-addons</id>
+            <url>http://maven.vaadin.com/vaadin-addons</url>
+        </repository>
+    </repositories>
 
     <dependencies>
 
@@ -32,6 +43,47 @@
             <artifactId>lombok</artifactId>
             <version>1.18.4</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-server</artifactId>
+            <version>${vaadin.version}</version>
+            <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.vaadin.external.flute</groupId>
+                    <artifactId>flute</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.vaadin.external.google</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.vaadin</groupId>
+                    <artifactId>vaadin-sass-compiler</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-client-compiled</artifactId>
+            <version>${vaadin.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-themes</artifactId>
+            <version>8.9.0</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-webapp</artifactId>
+            <version>${jetty.version}</version>
+            <type>jar</type>
         </dependency>
     </dependencies>
 
