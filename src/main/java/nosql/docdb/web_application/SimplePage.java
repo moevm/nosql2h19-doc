@@ -11,12 +11,6 @@ import java.util.Date;
 @Theme("valo")
 public class SimplePage extends UI {
     protected void init(VaadinRequest request) {
-        VerticalLayout layout = new VerticalLayout();
-        setContent(layout);
-        layout.addComponent(new Label("Hello world"));
-        layout.addComponent(new Button("Click me", event -> {
-            layout.addComponent(new Label("CLICKED"));
-            Notification.show("Hello at " + new Date());
-        }));
+        setContent(new MainView());
     }
 }

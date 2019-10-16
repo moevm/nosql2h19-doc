@@ -17,7 +17,7 @@ public class Test {
         MongoDatabase database = mongoClient.getDatabase("mydb");
         MongoCollection<Document> collection = database.getCollection("test");
 
-        SimpleDocument document=new SimpleDocument("Вася","Дневник",100);
+        SimpleDocument document=new SimpleDocument("Вася1","Дневник",100);
 
         collection.insertOne(Document.parse(gson.toJson(document)));
 
