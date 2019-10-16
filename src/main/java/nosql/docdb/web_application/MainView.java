@@ -16,22 +16,20 @@ public class MainView extends VerticalLayout {
     private final TextField queryField;
     private final Button searchButton;
 
-    private final CheckBox option1;
-    private final CheckBox option2;
+    private final CheckBox definedDocumentStructureCheckBox;
+    private final CheckBox documentsWithoutHeadersCheckBox;
 
     private final Label countOfDocumentLabel;
-    private final Label countOfDocumentWithoutHeadersLabel;
-    private final Label countOfDocumentWithDefinedStructureLabel;
 
     @SneakyThrows
     public MainView(){
         setSizeFull();
-
+        setMargin(false);
         previewFrame=new BrowserFrame(){{
             setSizeFull();
 
             byte[] pdf= new FileInputStream("Лабы методичка.pdf").readAllBytes();
-            setSource(new StreamResource(() -> new ByteArrayInputStream(pdf), "file.pdf"));
+            setSource(new StreamResource(() -> new ByteArrayInputStream(pdf), "Криптография. Лабораторный практикум.pdf"));
         }};
 
         resultsGrid=new Grid<ResultRecord>(){{
@@ -50,26 +48,29 @@ public class MainView extends VerticalLayout {
         });
 
         countOfDocumentLabel =new Label("Количество документов: 4");
-        countOfDocumentWithoutHeadersLabel =new Label("Количество документов без заголовков: 2");
-        countOfDocumentWithDefinedStructureLabel =new Label("Количество документов с заданной структурой: 3");
 
-        option1=new CheckBox("Документы с заданной структурой");
-        option2=new CheckBox("Документы без заголовков");
+
+        definedDocumentStructureCheckBox =new CheckBox("Документы с заданной структурой");
+        documentsWithoutHeadersCheckBox =new CheckBox("Документы без заголовков");
 
         HorizontalSplitPanel horizontalSplit=new HorizontalSplitPanel(){{
             setSizeFull();
             setFirstComponent(new VerticalLayout(){{
                 setSizeFull();
                 addComponents(
-                        new VerticalLayout(option1,option2){{
-                            setWidth("100%");
+
+                        new VerticalLayout(definedDocumentStructureCheckBox, documentsWithoutHeadersCheckBox){{
+                            setMargin(false);
+                            //setSizeFull();
                         }},
                         new HorizontalLayout(queryField,searchButton){{
                             setWidth("100%");
                             setExpandRatio(queryField,1);
                         }},
                         resultsGrid,
-                        new VerticalLayout(countOfDocumentLabel,countOfDocumentWithDefinedStructureLabel,countOfDocumentWithoutHeadersLabel)
+                        new VerticalLayout(countOfDocumentLabel) {{
+                            setMargin(false);
+                        }}
                 );
                 setExpandRatio(resultsGrid,1);
             }});
