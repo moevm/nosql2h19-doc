@@ -4,6 +4,7 @@ import com.vaadin.server.StreamResource;
 import com.vaadin.ui.*;
 import lombok.SneakyThrows;
 import lombok.Value;
+import nosql.docdb.file_utils.FileUtills;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -28,7 +29,11 @@ public class MainView extends VerticalLayout {
         previewFrame=new BrowserFrame(){{
             setSizeFull();
 
-            byte[] pdf= new FileInputStream("Лабы методичка.pdf").readAllBytes();
+            byte[] pdf;
+            try(FileInputStream fis=new FileInputStream("Лабы методичка.pdf")) {
+                pdf= FileUtills.readAllBytes(fis);
+            }
+
             setSource(new StreamResource(() -> new ByteArrayInputStream(pdf), "Криптография. Лабораторный практикум.pdf"));
         }};
 
