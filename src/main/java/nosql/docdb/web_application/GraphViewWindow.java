@@ -7,7 +7,7 @@ import com.vaadin.ui.Window;
 
 
 public class GraphViewWindow extends Window {
-    private final BrowserFrame htmlFrame=new BrowserFrame();
+    private final BrowserFrame htmlFrame;
 
     public GraphViewWindow(){
         setCaption("График");
@@ -16,7 +16,11 @@ public class GraphViewWindow extends Window {
         center();
         UI.getCurrent().addWindow(this);
 
-        htmlFrame.setSource(new ExternalResource("/static/highcharts.html"));
+
+        htmlFrame=new BrowserFrame(){{
+            setSizeFull();
+            setSource(new ExternalResource("/static/highcharts.html"));
+        }};
 
         setContent(htmlFrame);
     }
