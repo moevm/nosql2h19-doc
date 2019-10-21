@@ -2,16 +2,16 @@ package nosql.docdb.web_application;
 
 import com.vaadin.ui.*;
 
-public class StaticticWindow extends Window {
-        public StaticticWindow(MainView.FileFullInfo record) {
+public class StatisticWindow extends Window {
+        public StatisticWindow(MainView.FileFullInfo record) {
                 super("Статистика по документу \""+record.getName()+"\""); // Set window caption
                 center();
                 setClosable(true);
                 setModal(false);
                 HorizontalSplitPanel horizontalSplitPanel = new HorizontalSplitPanel();
                 VerticalLayout layoutButtons = new VerticalLayout();
-                HorizontalLayout layoutPlot = new HorizontalLayout();
-
+                VerticalSplitPanel layoutPlot = new VerticalSplitPanel();
+                layoutPlot.addComponents(new Button("a"),new Button("b"));
                 layoutButtons.addComponent(new Button("but"));
                 horizontalSplitPanel.addComponents(layoutButtons, layoutPlot);
                 setContent(horizontalSplitPanel);
