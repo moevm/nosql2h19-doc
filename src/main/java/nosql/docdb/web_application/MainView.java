@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class MainView extends VerticalLayout {
     private final BrowserFrame previewFrame;
@@ -99,7 +100,17 @@ public class MainView extends VerticalLayout {
 
                 }
             }, new UploadStateWindow());
-            multiFileUpload.setIndeterminate(false);
+            multiFileUpload.setUploadButtonCaptions("Загрузить","Загрузить");
+            String[] styles={"v-button", "v-widget", "i-hPadding3", "small", "i-small"};
+            multiFileUpload.addStyleNames(styles);
+            Stream.of(styles).forEach(st->{
+                if(!st.contains("custom"))return;
+                multiFileUpload.removeStyleName(st);
+            });
+
+
+            System.out.println(multiFileUpload.getStyleName());
+
             addComponent(multiFileUpload);
 
         });
