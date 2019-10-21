@@ -34,6 +34,7 @@ public class MainView extends VerticalLayout {
 
     @SneakyThrows
     public MainView(){
+        new GraphViewWindow();
         setSizeFull();
         setMargin(false);
         previewFrame=new BrowserFrame(){{

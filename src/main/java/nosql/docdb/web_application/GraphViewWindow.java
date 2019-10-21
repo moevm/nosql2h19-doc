@@ -2,6 +2,7 @@ package nosql.docdb.web_application;
 
 import com.vaadin.server.ExternalResource;
 import com.vaadin.ui.BrowserFrame;
+import com.vaadin.ui.UI;
 import com.vaadin.ui.Window;
 
 
@@ -13,8 +14,9 @@ public class GraphViewWindow extends Window {
         setWidth("50%");
         setHeight("50%");
         center();
+        UI.getCurrent().addWindow(this);
 
-        //htmlFrame.setSource();
+        htmlFrame.setSource(new ExternalResource("/static/highcharts.html"));
 
         setContent(htmlFrame);
     }
