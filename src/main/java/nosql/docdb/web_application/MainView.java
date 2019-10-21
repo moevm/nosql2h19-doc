@@ -1,7 +1,5 @@
 package nosql.docdb.web_application;
 
-import com.github.daishy.rangeslider.RangeSlider;
-import com.github.daishy.rangeslider.client.Range;
 import com.vaadin.contextmenu.GridContextMenu;
 import com.vaadin.server.StreamResource;
 import com.vaadin.ui.*;
@@ -23,12 +21,9 @@ public class MainView extends VerticalLayout {
     private final Button exportDB;
     private final Button showStatisticButton;
     private final CheckBox searchInTextCheckBox;
-    private final CheckBox definedDocumentStructureCheckBox;
-    private final CheckBox documentsWithoutHeadersCheckBox;
-    private final Label countOfDocumentLabel;
-    private final RangeSlider limitCountOfPagesSlider;
-    private final RangeSlider limitWeightSlider;
 
+    private final Label countOfDocumentLabel;
+    private final Button filterButton;
     @SneakyThrows
     public MainView(){
         setSizeFull();
@@ -43,12 +38,7 @@ public class MainView extends VerticalLayout {
 
             setSource(new StreamResource(() -> new ByteArrayInputStream(pdf), "Криптография. Лабораторный практикум.pdf"));
         }};
-        limitCountOfPagesSlider  = new RangeSlider(new Range(0, 1000));
-        limitCountOfPagesSlider.setValue(new Range(50, 100));
-        limitCountOfPagesSlider.setStep(10);
-        limitWeightSlider  = new RangeSlider(new Range(0, 1000));
-        limitWeightSlider.setValue(new Range(50, 100));
-        limitWeightSlider.setStep(10);
+
         resultsGrid=new Grid<FileFullInfo>(){{
             setSizeFull();
             addColumn(FileFullInfo::getName).setCaption("Документ");
@@ -78,6 +68,13 @@ public class MainView extends VerticalLayout {
         searchButton=new Button("Поиск",e->{
 
         });
+        filterButton = new Button("Фильтры");
+        filterButton.addClickListener(e->{
+            UI.getCurrent().addWindow(new FilterWindow());
+
+        });
+        filterButton.setStyleName("i-hPadding3 small i-small");
+
         searchInTextCheckBox = new CheckBox("Искать в тексте");
         countOfDocumentLabel =new Label("Количество документов: 4");
         exportDB = new Button("Страница администратора");
@@ -94,35 +91,19 @@ public class MainView extends VerticalLayout {
             UI.getCurrent().addWindow(new AdminWindow());
         });
 
-        definedDocumentStructureCheckBox =new CheckBox("Документы с заданной структурой");
-        documentsWithoutHeadersCheckBox =new CheckBox("Документы без заголовков");
 
-        HorizontalLayout upperPanel = new HorizontalLayout(
-                new VerticalLayout(definedDocumentStructureCheckBox, documentsWithoutHeadersCheckBox) {{
-                    setMargin(false);
-                    //setSizeFull();
-                }},
-                new VerticalLayout(limitCountOfPagesSlider,limitWeightSlider) {{
-                    setMargin(false);
-                    setSizeFull();
-                    setComponentAlignment(limitCountOfPagesSlider,Alignment.TOP_LEFT);
-                    setComponentAlignment(limitWeightSlider,Alignment.BOTTOM_LEFT);
-                    limitCountOfPagesSlider.setWidth("100%");
-                    limitWeightSlider.setWidth("100%");
 
-                }}
-                ,showStatisticButton
-        )   {{
-            setWidth("100%");
-            setComponentAlignment(showStatisticButton,Alignment.MIDDLE_RIGHT);
-        }};
         HorizontalSplitPanel horizontalSplit=new HorizontalSplitPanel(){{
             setSizeFull();
             setFirstComponent(new VerticalLayout(){{
                 setSizeFull();
                 addComponents(
-                       upperPanel,
+                        new HorizontalLayout(filterButton,showStatisticButton){{
+                            //setWidth("100%");
 
+                            //setComponentAlignment(showStatisticButton,Alignment.MIDDLE_RIGHT);
+
+                        }},
                         new HorizontalLayout(queryField,searchButton,searchInTextCheckBox){{
                             setWidth("100%");
                             setComponentAlignment(searchInTextCheckBox,Alignment.MIDDLE_CENTER);
