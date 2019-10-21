@@ -43,10 +43,10 @@ public class MainView extends VerticalLayout {
 
             setSource(new StreamResource(() -> new ByteArrayInputStream(pdf), "Криптография. Лабораторный практикум.pdf"));
         }};
-        limitCountOfPagesSlider  = new RangeSlider("Количество страниц", new Range(0, 1000));
+        limitCountOfPagesSlider  = new RangeSlider(new Range(0, 1000));
         limitCountOfPagesSlider.setValue(new Range(50, 100));
         limitCountOfPagesSlider.setStep(10);
-        limitWeightSlider  = new RangeSlider("Объем документа, Мб", new Range(0, 1000));
+        limitWeightSlider  = new RangeSlider(new Range(0, 1000));
         limitWeightSlider.setValue(new Range(50, 100));
         limitWeightSlider.setStep(10);
         resultsGrid=new Grid<FileFullInfo>(){{
@@ -105,8 +105,10 @@ public class MainView extends VerticalLayout {
                 new VerticalLayout(limitCountOfPagesSlider,limitWeightSlider) {{
                     setMargin(false);
                     setSizeFull();
-                    limitCountOfPagesSlider.setSizeFull();
-                    limitWeightSlider.setSizeFull();
+                    setComponentAlignment(limitCountOfPagesSlider,Alignment.TOP_LEFT);
+                    setComponentAlignment(limitWeightSlider,Alignment.BOTTOM_LEFT);
+                    limitCountOfPagesSlider.setWidth("100%");
+                    limitWeightSlider.setWidth("100%");
 
                 }}
                 ,showStatisticButton
