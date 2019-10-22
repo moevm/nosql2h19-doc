@@ -93,33 +93,3 @@ public class StatisticWindow extends Window {
 
         }
 }
-class PlotData{
-
-
-        public PlotData(String parametrName,ArrayList<Number> xs, ArrayList<Number> ys) {
-                this.parametrName = parametrName;
-                this.xs = xs;
-                this.ys = ys;
-        }
-        public PlotData(String parametrName, ArrayList<Number> ys) {
-                this.parametrName = parametrName;
-                this.ys = ys;
-        }
-
-        String parametrName;
-
-        ArrayList<Number> xs = new ArrayList<>();
-        ArrayList<Number> ys = new ArrayList<>();
-}
-
-class AnalisisData{
-        public AnalisisData(String xAxis, String yAxis, String plotName) {
-                this.xAxis = xAxis;
-                this.yAxis = yAxis;
-                this.plotName = plotName;
-        }
-
-        String xAxis;
-        String yAxis;
-        String plotName;
-}
