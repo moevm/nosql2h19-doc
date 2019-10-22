@@ -43,7 +43,12 @@ public class StatisticWindowNew extends Window {
                         addTab(new LinearStatisticTab(record,allDta,curData,analisisImageData),"Cтатистика по количеству картинок");
                         addTab(new LinearStatisticTab(record,allDta1,curData1,analisisTablesData),"Cтатистика по количеству таблиц");
                         addTab(new BarStatisticTab(record),"Частота встречаемости слова");
+                        addSelectedTabChangeListener(e->{
+                                Component selectedTab=e.getTabSheet().getSelectedTab();
+                                if(selectedTab instanceof Refreshable) ((Refreshable)selectedTab).onRefresh();
+                        });
                         setSizeFull();
+                        if(getSelectedTab() instanceof Refreshable) ((Refreshable)getSelectedTab()).onRefresh();
                 }});
         }
 
@@ -61,15 +66,19 @@ class HighChartFrame extends BrowserFrame{
                 String params= Stream.of(args)
                         .map(arg->new Gson().toJson(arg))
                         .collect(Collectors.joining(","));
+                String js="((document.getElementById('"+getId()+"').childNodes[0].contentWindow)."+functionName+"(" + params +"))";
+
                 JavaScript.getCurrent()
-                        .execute("((document.getElementById('"+getId()+"').childNodes[0].contentWindow)."+functionName+"("
-                                + params
-                                +"))"
-                        );
+                        .execute("setTimeout(()=>"+js+",200)");
         }
+
 }
 
-class LinearStatisticTab extends VerticalLayout{
+interface Refreshable extends Component{
+        void onRefresh();
+}
+
+class LinearStatisticTab extends VerticalLayout implements Refreshable{
         private  final  HighChartFrame htmlFrame;
         private final Button buildButton;
         LinearStatisticTab(MainView.FileFullInfo record, /**/PlotData allDta, PlotData curData /**/, AnalisisData analisisData) {
@@ -79,16 +88,20 @@ class LinearStatisticTab extends VerticalLayout{
                 buildButton = new Button("Построить");
                 buildButton.setStyleName("i-hPadding3 small i-small");
                 buildButton.addClickListener(e->{
-
+                        System.out.println("click ");
                        htmlFrame.callJS("buildLinearChart",allDta,curData,analisisData);
                 });
                 addComponents(buildButton,htmlFrame);
                 setExpandRatio(htmlFrame,1);
         }
 
+        @Override
+        public void onRefresh() {
+                buildButton.click();
+        }
 }
 
-class BarStatisticTab extends VerticalLayout{
+class BarStatisticTab extends VerticalLayout implements Refreshable{
         private  final  HighChartFrame htmlFrame;
         private final Button buildButton;
         private final CheckBox separatedTextsCheckBox;
@@ -125,5 +138,10 @@ class BarStatisticTab extends VerticalLayout{
                         setComponentAlignment(separatedTextsCheckBox,Alignment.MIDDLE_LEFT);
                 }},htmlFrame);
                 setExpandRatio(htmlFrame,1);
+        }
+
+        @Override
+        public void onRefresh() {
+                buildButton.click();
         }
 }
