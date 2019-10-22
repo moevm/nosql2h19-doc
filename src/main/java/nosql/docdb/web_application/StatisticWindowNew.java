@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class StatisticWindowNew extends Window {
         public StatisticWindowNew(MainView.FileFullInfo record) {
@@ -27,16 +29,33 @@ public class StatisticWindowNew extends Window {
         }
 
 }
+
+class HighChartFrame extends BrowserFrame{
+        HighChartFrame(String htmlUrl){
+                setSizeFull();
+                setSource(new ExternalResource(htmlUrl));
+                setId(UUID.randomUUID().toString());
+        }
+
+        void callJS(String functionName,Object... args){
+                String params= Stream.of(args)
+                        .map(arg->new Gson().toJson(arg))
+                        .collect(Collectors.joining(","));
+                JavaScript.getCurrent()
+                        .execute("((document.getElementById('"+getId()+"').childNodes[0].contentWindow)."+functionName+"("
+                                + params
+                                +"))"
+                        );
+        }
+}
+
 class StatisticTab extends VerticalLayout{
-        private  final  BrowserFrame htmlFrame;
+        private  final  HighChartFrame htmlFrame;
         private final Button buildButton;
         StatisticTab(MainView.FileFullInfo record) {
+                System.out.println("INIT");
                 setSizeFull();
-                htmlFrame = new BrowserFrame() {{
-                        setSizeFull();
-                        setSource(new ExternalResource("/static/highcharts.html"));
-                        setId(UUID.randomUUID().toString());
-                }};
+                htmlFrame = new HighChartFrame("/static/highcharts.html");
                 buildButton = new Button("Построить");
                 buildButton.addClickListener(e->{
                         //---
@@ -48,7 +67,7 @@ class StatisticTab extends VerticalLayout{
                         curData.xs = new ArrayList<>(Arrays.asList(400));
                         //---
                         AnalisisData analisisData = new AnalisisData("Количество страниц","Количество картинок","Зависимость количества картинок от количества страниц");
-                        com.vaadin.ui.JavaScript.getCurrent().execute("((document.getElementById('"+htmlFrame.getId()+"').childNodes[0].contentWindow).buildLinearChart("+new Gson().toJson(allDta)+","+ new Gson().toJson(curData)+","+new Gson().toJson(analisisData)+"))");
+                       htmlFrame.callJS("buildLinearChart",allDta,curData,analisisData);
                 });
                 addComponents(buildButton,htmlFrame);
                 setExpandRatio(htmlFrame,1);
