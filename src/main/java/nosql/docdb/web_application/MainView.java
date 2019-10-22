@@ -83,7 +83,7 @@ public class MainView extends VerticalLayout {
         showStatisticButton.setStyleName("i-hPadding3 small i-small");
         showStatisticButton.addClickListener(e->{
             Optional<FileFullInfo> selected=resultsGrid.getSelectedItems().stream().findFirst();
-            selected.ifPresent(fileFullInfo -> UI.getCurrent().addWindow(new StatisticWindow(fileFullInfo)));
+            selected.ifPresent(fileFullInfo -> UI.getCurrent().addWindow(new StatisticWindowNew(fileFullInfo)));
         });
 
 

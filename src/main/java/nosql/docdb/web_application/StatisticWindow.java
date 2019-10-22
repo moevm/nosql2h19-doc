@@ -5,17 +5,25 @@ import com.vaadin.server.ExternalResource;
 import com.vaadin.ui.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class StatisticWindow extends Window {
         private final BrowserFrame htmlFrame;
-        private PlotData countOfImagesFromPages=
+        private final Button analisisOfImagesCountButton;
+        private final Button analisisOfTablesCountButton;
+        private final TextField textField;
+        private final Button analisisOfWordsButton;
+        private final CheckBox separatedTextsCheckBox;
+        private PlotData allDta =
                 new PlotData("Все документы",new ArrayList<>(),new ArrayList<>());
-
         public StatisticWindow(MainView.FileFullInfo record) {
                 super("Статистика по документу \""+record.getName()+"\""); // Set window caption
                 center();
                 setClosable(true);
                 setModal(false);
+                setWidth("500px");
+                setHeight("500px");
+
                 PlotData curData = new PlotData(record.getName(),new ArrayList<>(), new ArrayList<>());
                 htmlFrame=new BrowserFrame(){{
                         setSizeFull();
@@ -28,17 +36,56 @@ public class StatisticWindow extends Window {
                 layoutPlot.addComponent(htmlFrame);
                 layoutPlot.setHeight("100%");
                 htmlFrame.setWidth("100%");
-                Button analisisOfImagesCount = new Button("Статистика по количеству картинок");
-                analisisOfImagesCount.addClickListener(e->{
+                separatedTextsCheckBox = new CheckBox("Документы по отдельности");
+                analisisOfImagesCountButton = new Button("Статистика по количеству картинок");
+                analisisOfImagesCountButton.addClickListener(e->{
+                        //---
+                        allDta.ys = new ArrayList<>(Arrays.asList(30,40,0,50));
+                        curData.ys = new ArrayList<>(Arrays.asList(25));
+                        allDta.xs = new ArrayList<>(Arrays.asList(130,430,160,250));
+                        curData.xs = new ArrayList<>(Arrays.asList(400));
+                        //---
                         AnalisisData analisisData = new AnalisisData("Количество страниц","Количество картинок","Зависимость количества картинок от количества страниц");
-                        com.vaadin.ui.JavaScript.getCurrent().execute("((document.getElementById(\"brf\").childNodes[0].contentWindow).buildLinearChart("+new Gson().toJson(countOfImagesFromPages)+","+ new Gson().toJson(curData)+","+new Gson().toJson(analisisData)+"))");
+                        com.vaadin.ui.JavaScript.getCurrent().execute("((document.getElementById(\"brf\").childNodes[0].contentWindow).buildLinearChart("+new Gson().toJson(allDta)+","+ new Gson().toJson(curData)+","+new Gson().toJson(analisisData)+"))");
                 });
-                Button analisisOfWords = new Button("Частота встречаемости слова");
-                analisisOfWords.addClickListener(e->{
-                        AnalisisData analisisData = new AnalisisData("Слово","Частота встречаемости","Популярность слова");
-                        com.vaadin.ui.JavaScript.getCurrent().execute("((document.getElementById(\"brf\").childNodes[0].contentWindow).buildBarChart())");
+                analisisOfTablesCountButton = new Button("Статистика по количеству таблиц");
+                analisisOfTablesCountButton.addClickListener(e->{
+                        //---
+                        allDta.ys = new ArrayList<>(Arrays.asList(3,5,0,14));
+                        curData.ys = new ArrayList<>(Arrays.asList(25));
+                        allDta.xs = new ArrayList<>(Arrays.asList(130,430,160,250));
+                        curData.xs = new ArrayList<>(Arrays.asList(400));
+                        //---
+                        AnalisisData analisisData = new AnalisisData("Количество страниц","Количество таблиц","Зависимость количества таблиц от количества страниц");
+                        com.vaadin.ui.JavaScript.getCurrent().execute("((document.getElementById(\"brf\").childNodes[0].contentWindow).buildLinearChart("+new Gson().toJson(allDta)+","+ new Gson().toJson(curData)+","+new Gson().toJson(analisisData)+"))");
                 });
-                layoutButtons.addComponents(analisisOfImagesCount,analisisOfWords);
+                HorizontalLayout analisisOfWordLayout = new HorizontalLayout();
+                textField = new TextField();
+                analisisOfWordsButton = new Button("Частота встречаемости слова");
+                analisisOfWordsButton.addClickListener(e->{
+                        AnalisisData analisisData = new AnalisisData("Документ","Частота встречаемости","Популярность слова алгоритм");
+                        //---
+                        allDta.ys = new ArrayList<>(Arrays.asList(3));
+                        curData.ys = new ArrayList<>(Arrays.asList(8));
+                        PlotData plot1 = new PlotData("Уголовный кодекс",new ArrayList<>(Arrays.asList(5)));
+                        PlotData plot2 = new PlotData("Энциклопедия обо всем",new ArrayList<>(Arrays.asList(8)));
+                        PlotData plot3 = new PlotData("ТОЭ. Методическое пособие",new ArrayList<>(Arrays.asList(1)));
+                        PlotData plot4 = new PlotData("Криптография. Лабораторный практикум",new ArrayList<>(Arrays.asList(2)));
+                        ArrayList<PlotData> data = new ArrayList<>();
+                        if(!separatedTextsCheckBox.getValue())data.addAll(Arrays.asList(allDta,curData));
+                        else data.addAll(Arrays.asList(plot1,plot2,plot3,plot4));
+                        //--
+                        com.vaadin.ui.JavaScript.getCurrent().execute("((document.getElementById(\"brf\").childNodes[0].contentWindow).buildBarChart("+new Gson().toJson(data)+","+new Gson().toJson(analisisData)+"))");
+                });
+                analisisOfWordsButton.setWidth("100%");
+                analisisOfWordLayout.addComponents(new HorizontalLayout(analisisOfWordsButton,new VerticalLayout(separatedTextsCheckBox,textField){{
+                        setMargin(false);
+                        textField.setWidth("100%");
+                }}));
+                //analisisOfWordLayout.setComponentAlignment(separatedTextsCheckBox,Alignment.MIDDLE_LEFT);
+
+                layoutButtons.addComponents(new HorizontalLayout(analisisOfImagesCountButton, analisisOfTablesCountButton),analisisOfWordLayout);
+
                 horizontalSplitPanel.addComponents(layoutButtons, layoutPlot);
                 setContent(horizontalSplitPanel);
 
@@ -49,16 +96,20 @@ public class StatisticWindow extends Window {
 class PlotData{
 
 
-        public PlotData(String parametrName,ArrayList<Double> xs, ArrayList<Double> ys) {
+        public PlotData(String parametrName,ArrayList<Number> xs, ArrayList<Number> ys) {
                 this.parametrName = parametrName;
                 this.xs = xs;
+                this.ys = ys;
+        }
+        public PlotData(String parametrName, ArrayList<Number> ys) {
+                this.parametrName = parametrName;
                 this.ys = ys;
         }
 
         String parametrName;
 
-        ArrayList<Double> xs = new ArrayList<>();
-        ArrayList<Double> ys = new ArrayList<>();
+        ArrayList<Number> xs = new ArrayList<>();
+        ArrayList<Number> ys = new ArrayList<>();
 }
 
 class AnalisisData{
