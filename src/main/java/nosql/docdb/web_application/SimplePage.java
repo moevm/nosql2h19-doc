@@ -5,7 +5,6 @@ import com.vaadin.annotations.Title;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.ui.*;
 
-import java.util.Date;
 
 @Title("Light Vaadin")
 @Theme("valo")
