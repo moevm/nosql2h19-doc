@@ -1,7 +1,5 @@
 package nosql.docdb.doc_parser;
 
-import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
-import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
 import lombok.SneakyThrows;
 import nosql.docdb.doc_parser.object_model.Document;
 import nosql.docdb.doc_parser.object_model.*;
@@ -11,8 +9,6 @@ import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.xwpf.usermodel.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
