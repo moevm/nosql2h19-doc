@@ -116,7 +116,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>nosql.docdb.Test</mainClass>
+                            <mainClass>nosql.docdb.Application</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

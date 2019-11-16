@@ -2,10 +2,7 @@ package nosql.docdb.file_utils;
 
 import lombok.SneakyThrows;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Arrays;
 
 public class FileUtills {
@@ -16,6 +13,12 @@ public class FileUtills {
     public static void copyFiles(String from, String to){
         try(FileInputStream fis=new FileInputStream(from); FileOutputStream fos=new FileOutputStream(to)) {
             fos.write(readAllBytes(fis));
+        }
+    }
+
+    public static byte[] readAllBytes(String path) throws IOException {
+        try(FileInputStream fis=new FileInputStream(path)) {
+            return readAllBytes(fis);
         }
     }
 

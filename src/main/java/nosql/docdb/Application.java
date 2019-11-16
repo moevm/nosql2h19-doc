@@ -10,7 +10,7 @@ import lombok.Value;
 import nosql.docdb.web_application.ServletServer;
 import org.bson.Document;
 
-public class Test {
+public class Application {
     public static void main(String[] args) {
         Gson gson=new GsonBuilder().setPrettyPrinting().create();
         //MongoClient mongoClient = MongoClients.create("mongodb://localhost");

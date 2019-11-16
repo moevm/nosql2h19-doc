@@ -54,20 +54,18 @@ public class AdminWindow extends Window {
             }
         }, new UploadStateWindow());
         exportDBDialog.setUploadButtonCaptions("Экспортировать БД","Экспортировать БД");
-        importDBDialog = new MultiFileUpload(new UploadFinishedHandler() {
-            @Override
-            public void handleFile(InputStream inputStream, String s, String s1, long l, int i) {
+        importDBDialog = new MultiFileUpload((inputStream, name, type, length, uploadQuqueSize) -> {
 
-            }
         }, new UploadStateWindow());
         importDBDialog.setUploadButtonCaptions("Импортировать БД","Импортировать БД");
         addToDBDialog = new MultiFileUpload(new UploadFinishedHandler() {
             @Override
-            public void handleFile(InputStream inputStream, String s, String s1, long l, int i) {
-
+            public void handleFile(InputStream inputStream, String name, String type, long l, int i) {
+                System.out.println(l+"|"+i);
             }
         }, new UploadStateWindow());
         addToDBDialog.setUploadButtonCaptions("Добавить файл в БД","Добавить файл в БД");
+
         verticalLayout.addComponent(exportDBDialog);
         verticalLayout.addComponent (importDBDialog);
         verticalLayout.addComponent (addToDBDialog);
