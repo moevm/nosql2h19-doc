@@ -1,7 +1,7 @@
 package nosql.docdb.doc_parser;
 
 import lombok.SneakyThrows;
-import nosql.docdb.doc_parser.object_model.Document;
+import nosql.docdb.doc_parser.object_model.ParsedDocument;
 import nosql.docdb.doc_parser.object_model.*;
 import nosql.docdb.file_utils.FileUtills;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -21,13 +21,13 @@ import java.util.stream.Stream;
 public class DocumentConverter {
     @SneakyThrows
     public static void main(String[] args) {
-        Document document=importFromDoc("dsp.docx", FileUtills.readAllBytes("documents/TsOS_lab_1.docx"));
+        ParsedDocument document=importFromDoc("dsp.docx", FileUtills.readAllBytes("documents/TsOS_lab_1.docx"));
         System.out.println(document);
 
     }
 
 
-    public static Document importFromDoc(String name, byte[] bytes) throws IOException, InvalidFormatException {
+    public static ParsedDocument importFromDoc(String name, byte[] bytes) throws IOException, InvalidFormatException {
         XWPFDocument xdoc = new XWPFDocument(OPCPackage.open(new ByteArrayInputStream(bytes)));
         List<XWPFParagraph> par=xdoc.getParagraphs();
         List<IBodyElement> elems=xdoc.getBodyElements();
@@ -86,6 +86,6 @@ public class DocumentConverter {
 
         List<DocumentObject> documentObjects=Stream.concat(pictures.stream(),tables.stream()).collect(Collectors.toList());
 
-        return new Document(name, Instant.now(), pageCount, bytes.length, bytes, paragraphs, documentObjects);
+        return new ParsedDocument(name, Instant.now(), pageCount, bytes.length,bytes, paragraphs, documentObjects);
     }
 }

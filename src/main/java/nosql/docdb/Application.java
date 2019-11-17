@@ -12,18 +12,6 @@ import org.bson.Document;
 
 public class Application {
     public static void main(String[] args) {
-        Gson gson=new GsonBuilder().setPrettyPrinting().create();
-        //MongoClient mongoClient = MongoClients.create("mongodb://localhost");
-        //MongoDatabase database = mongoClient.getDatabase("mydb");
-        //MongoCollection<Document> collection = database.getCollection("test");
-
-        //SimpleDocument document=new SimpleDocument("Вася1","Дневник",100);
-
-        //collection.insertOne(Document.parse(gson.toJson(document)));
-
-        //SimpleDocument documentInBase=gson.fromJson(collection.find().first().toJson(),SimpleDocument.class);
-        //System.out.println(documentInBase);
-
         ServletServer.startServer();
     }
 
