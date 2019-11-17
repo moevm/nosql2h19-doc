@@ -81,7 +81,8 @@ public class MongoDB{
                         Filters.gte("pageCount",query.getMinPageCount()),
                         Filters.lte("pageCount",query.getMaxPageCount()),
                         Filters.gte("size",query.getMinSize()),
-                        Filters.lte("size",query.getMaxSize())
+                        Filters.lte("size",query.getMaxSize()),
+                        query.getFormat().getFilter()
                 ))
                 .sort(query.getSortDirection().getSortDirection().apply(query.getSortField()))
                 .limit(query.getLimit())
@@ -136,8 +137,19 @@ public class MongoDB{
             private Function<String, Bson> sortDirection;
         }
 
+        @AllArgsConstructor
+        @Getter
         public enum DocFormat{
-            FREE_FORM, WITHOUT_TITLES, EXACT_STRUCTURE
+            FREE_FORM(Filters.exists("_id")),
+            WITHOUT_TITLES(Filters.size("paragraphs",1)),
+            EXACT_STRUCTURE(
+                    Filters.and(
+                            Filters.elemMatch("paragraphs",Filters.regex("name",".*Цель работы.*")),
+                            Filters.elemMatch("paragraphs",Filters.regex("name",".*Выводы.*"))
+                    )
+            );
+
+            private Bson filter;
         }
     }
 
@@ -163,10 +175,12 @@ public class MongoDB{
                                 .nameContains("dsp")
                                 .minSize(2522630)
                                 .maxSize(2522635)
+                                .format(Query.DocFormat.EXACT_STRUCTURE)
                                 .build()
                 )
                 .stream()
-                .map(DbDocument::getSize)
+                .map(DbDocument::getParagraphs)
+                .map(p->p.stream().map(Paragraph::getName).collect(Collectors.toList()))
                 .collect(Collectors.toList())
         );
 
