@@ -15,27 +15,32 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Sorts;
 import lombok.*;
 import nosql.docdb.doc_parser.DocumentConverter;
 import nosql.docdb.doc_parser.object_model.*;
 import nosql.docdb.file_utils.FileUtills;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.bson.*;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 
 public class MongoDB{
@@ -73,6 +78,19 @@ public class MongoDB{
         collection.insertOne(Document.parse(GSON.toJson(DbDocument.fromParsedDocument(document,fileId))));
     }
 
+    public List<String> loadIds(){
+        List<String> ids=new ArrayList<>();
+        collection.find().projection(Projections.include("_id")).cursor().forEachRemaining(id->{
+            ids.add(id.getObjectId("_id").toHexString());
+        });
+        return ids;
+    }
+
+    public Optional<DbDocument> loadById(String id){
+        return Optional.ofNullable(collection.find().filter(Filters.eq("_id",new ObjectId(id))).first())
+                .map(d->GSON.fromJson(d.toJson(),DbDocument.class));
+    }
+
     public List<DbDocument> loadDocuments(Query query){
         List<DbDocument> results=new ArrayList<>();
         collection.find()
@@ -104,6 +122,54 @@ public class MongoDB{
                         .sortField("addDate")
                         .build()
         ).stream().findFirst();
+    }
+
+    public void exportToZip(OutputStream os) throws IOException {
+        List<String> ids=loadIds();
+        try(ZipOutputStream zos=new ZipOutputStream(os)) {
+            ids.stream()
+                    .map(id->Pair.of(id,loadById(id)))
+                    .filter(p->p.getRight().isPresent())
+                    .map(p->Pair.of(p.getLeft(),p.getRight().get()))
+                    .map(p-> Triple.of(p.getLeft(),p.getRight(),loadRawBytes(p.getRight())))
+                    .forEach(p->{
+                        safe(()->{
+                            zos.putNextEntry(new ZipEntry(p.getMiddle().getRawFileId()));
+                            zos.write(p.getRight());
+                            zos.closeEntry();
+                            zos.putNextEntry(new ZipEntry(p.getLeft()));
+                            zos.write(GSON.toJson(p.getMiddle()).getBytes());
+                            zos.closeEntry();
+                            return null;
+                        });
+                    });
+            zos.putNextEntry(new ZipEntry("content"));
+            zos.write(GSON.toJson(ids).getBytes());
+            zos.closeEntry();
+        }
+    }
+
+    public void importFromZip(String filePath) throws IOException {
+        try(ZipFile zf=new ZipFile(filePath)) {
+            InputStream is=zf.getInputStream(new ZipEntry("content"));
+            List<String> ids=GSON.fromJson(new InputStreamReader(is),new TypeToken<List<String>>(){}.getType());
+            ids.stream().forEach(id->{
+                safe(()->{
+                    DbDocument document=GSON.fromJson(new InputStreamReader(zf.getInputStream(new ZipEntry(id))),DbDocument.class);
+                    byte[] bytes=FileUtills.readAllBytes(zf.getInputStream(new ZipEntry(document.getRawFileId())));
+                    addDocument(document.toParsedDocument(bytes));
+                    return null;
+                });
+            });
+        }
+    }
+
+    private static <T> void safe(Callable<T> action){
+        try {
+            action.call();
+        }catch (Exception ignored){
+
+        }
     }
 
     @Value
@@ -184,5 +250,6 @@ public class MongoDB{
                 .collect(Collectors.toList())
         );
 
+        //db.importFromZip("export.zip");
     }
 }

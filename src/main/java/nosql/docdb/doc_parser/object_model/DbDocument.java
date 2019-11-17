@@ -27,4 +27,16 @@ public class DbDocument{
                 document.getDocumentObjects()
         );
     }
+
+    public ParsedDocument toParsedDocument(byte[] bytes){
+        return new ParsedDocument(
+                getName(),
+                getAddDate(),
+                getPageCount(),
+                getSize(),
+                bytes,
+                getParagraphs(),
+                getDocumentObjects()
+        );
+    }
 }
