@@ -3,6 +3,7 @@ package nosql.docdb.doc_parser;
 import lombok.SneakyThrows;
 import nosql.docdb.doc_parser.object_model.ParsedDocument;
 import nosql.docdb.doc_parser.object_model.*;
+import nosql.docdb.doc_to_pdf.DocToPdfConverter;
 import nosql.docdb.file_utils.FileUtills;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
@@ -27,7 +28,7 @@ public class DocumentConverter {
     }
 
 
-    public static ParsedDocument importFromDoc(String name, byte[] bytes) throws IOException, InvalidFormatException {
+    public static ParsedDocument importFromDoc(String name, byte[] bytes) throws Exception {
         XWPFDocument xdoc = new XWPFDocument(OPCPackage.open(new ByteArrayInputStream(bytes)));
         List<XWPFParagraph> par=xdoc.getParagraphs();
         List<IBodyElement> elems=xdoc.getBodyElements();
@@ -86,6 +87,7 @@ public class DocumentConverter {
 
         List<DocumentObject> documentObjects=Stream.concat(pictures.stream(),tables.stream()).collect(Collectors.toList());
 
-        return new ParsedDocument(name, Instant.now(), pageCount, bytes.length,bytes, paragraphs, documentObjects);
+        byte[] pdfBytes= DocToPdfConverter.convert(bytes);
+        return new ParsedDocument(name, Instant.now(), pageCount, bytes.length, bytes, pdfBytes, paragraphs, documentObjects);
     }
 }

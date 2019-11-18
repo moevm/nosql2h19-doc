@@ -13,28 +13,31 @@ public class DbDocument{
     int pageCount;
     long size;
     String rawFileId;
+    String pdfFileId;
     List<Paragraph> paragraphs;
     List<DocumentObject> documentObjects;
 
-    public static DbDocument fromParsedDocument(ParsedDocument document, String storedRawBytesId){
+    public static DbDocument fromParsedDocument(ParsedDocument document, String storedRawBytesId, String storedPdfBytesId){
         return new DbDocument(
                 document.getName(),
                 document.getAddDate(),
                 document.getPageCount(),
                 document.getSize(),
                 storedRawBytesId,
+                storedPdfBytesId,
                 document.getParagraphs(),
                 document.getDocumentObjects()
         );
     }
 
-    public ParsedDocument toParsedDocument(byte[] bytes){
+    public ParsedDocument toParsedDocument(byte[] bytes, byte[] pdfBytes){
         return new ParsedDocument(
                 getName(),
                 getAddDate(),
                 getPageCount(),
                 getSize(),
                 bytes,
+                pdfBytes,
                 getParagraphs(),
                 getDocumentObjects()
         );

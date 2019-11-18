@@ -18,19 +18,7 @@ public class ParsedDocument {
     int pageCount;
     long size;
     byte[] rawBytes;
+    byte[] pdfBytes;
     List<Paragraph> paragraphs;
     List<DocumentObject> documentObjects;
-}
-
-class Test{
-    public static void main(String[] args) {
-        Table t=new Table("table with name",15,2);
-        Picture p=new Picture("pic name", "jpg");
-
-        List<DocumentObject> documentObjects= Stream.of(t,p).collect(Collectors.toList());
-
-        ParsedDocument d=new ParsedDocument("",null,0,0, null,null,documentObjects);
-
-
-    }
 }

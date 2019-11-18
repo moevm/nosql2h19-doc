@@ -72,7 +72,8 @@ public class MongoDB{
 
     public void addDocument(ParsedDocument document){
         String fileId=gridFSBucket.uploadFromStream(document.getName(),new ByteArrayInputStream(document.getRawBytes())).toHexString();
-        collection.insertOne(Document.parse(GSON.toJson(DbDocument.fromParsedDocument(document,fileId))));
+        String pdfFileId=gridFSBucket.uploadFromStream(document.getName(),new ByteArrayInputStream(document.getPdfBytes())).toHexString();
+        collection.insertOne(Document.parse(GSON.toJson(DbDocument.fromParsedDocument(document,fileId, pdfFileId))));
     }
 
     public List<String> loadIds(){
@@ -132,7 +133,10 @@ public class MongoDB{
                     .forEach(p->{
                         safe(()->{
                             zos.putNextEntry(new ZipEntry(p.getMiddle().getRawFileId()));
-                            zos.write(p.getRight());
+                            zos.write(p.getRight().getLeft());
+                            zos.closeEntry();
+                            zos.putNextEntry(new ZipEntry(p.getMiddle().getPdfFileId()));
+                            zos.write(p.getRight().getRight());
                             zos.closeEntry();
                             zos.putNextEntry(new ZipEntry(p.getLeft()));
                             zos.write(GSON.toJson(p.getMiddle()).getBytes());
@@ -154,7 +158,8 @@ public class MongoDB{
                 safe(()->{
                     DbDocument document=GSON.fromJson(new InputStreamReader(zf.getInputStream(new ZipEntry(id))),DbDocument.class);
                     byte[] bytes=FileUtills.readAllBytes(zf.getInputStream(new ZipEntry(document.getRawFileId())));
-                    addDocument(document.toParsedDocument(bytes));
+                    byte[] pdfBytes=FileUtills.readAllBytes(zf.getInputStream(new ZipEntry(document.getPdfFileId())));
+                    addDocument(document.toParsedDocument(bytes,pdfBytes));
                     return null;
                 });
             });
@@ -226,10 +231,12 @@ public class MongoDB{
         }
     }
 
-    public byte[] loadRawBytes(DbDocument dbDocument){
-        ByteArrayOutputStream baos=new ByteArrayOutputStream();
-        gridFSBucket.downloadToStream(new ObjectId(dbDocument.getRawFileId()),baos);
-        return baos.toByteArray();
+    public Pair<byte[],byte[]> loadRawBytes(DbDocument dbDocument){
+        ByteArrayOutputStream doc=new ByteArrayOutputStream();
+        gridFSBucket.downloadToStream(new ObjectId(dbDocument.getRawFileId()),doc);
+        ByteArrayOutputStream pdf=new ByteArrayOutputStream();
+        gridFSBucket.downloadToStream(new ObjectId(dbDocument.getPdfFileId()),pdf);
+        return Pair.of(doc.toByteArray(),pdf.toByteArray());
     }
 
     @SneakyThrows
