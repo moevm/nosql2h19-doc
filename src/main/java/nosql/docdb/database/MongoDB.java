@@ -13,7 +13,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
-import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Sorts;
@@ -34,12 +33,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 
@@ -95,7 +92,7 @@ public class MongoDB{
         List<DbDocument> results=new ArrayList<>();
         collection.find()
                 .filter(Filters.and(
-                        Filters.regex("name",".*"+query.getNameContains()+".*"),
+                        query.getFindMode().getFilter().apply(query.getFindString()),
                         Filters.gte("pageCount",query.getMinPageCount()),
                         Filters.lte("pageCount",query.getMaxPageCount()),
                         Filters.gte("size",query.getMinSize()),
@@ -192,7 +189,17 @@ public class MongoDB{
         @Builder.Default
         SortDirection sortDirection=SortDirection.ASCENDING;
         @Builder.Default
-        String nameContains="";
+        String findString ="";
+        @Builder.Default
+        FindMode findMode=FindMode.IN_FILE_NAME;
+
+        @AllArgsConstructor
+        @Getter
+        public enum FindMode{
+            IN_FILE_NAME(s->Filters.regex("name",".*"+s+".*")),
+            EVERYWHERE(Filters::text);
+            private Function<String, Bson> filter;
+        }
 
         @AllArgsConstructor
         @Getter
@@ -200,7 +207,7 @@ public class MongoDB{
             DESCENDING(Sorts::descending),
             ASCENDING(Sorts::ascending);
 
-            private Function<String, Bson> sortDirection;
+            private final Function<String, Bson> sortDirection;
         }
 
         @AllArgsConstructor
@@ -215,7 +222,7 @@ public class MongoDB{
                     )
             );
 
-            private Bson filter;
+            private final Bson filter;
         }
     }
 
@@ -238,7 +245,8 @@ public class MongoDB{
         System.out.println(
                 db.loadDocuments(
                         Query.builder()
-                                .nameContains("dsp")
+                                .findString("лист")
+                                .findMode(Query.FindMode.IN_FILE_NAME)
                                 .minSize(2522630)
                                 .maxSize(2522635)
                                 .format(Query.DocFormat.EXACT_STRUCTURE)
