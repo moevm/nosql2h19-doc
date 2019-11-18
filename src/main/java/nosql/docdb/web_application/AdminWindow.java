@@ -4,6 +4,8 @@ import com.vaadin.ui.*;
 import com.wcs.wcslib.vaadin.widget.multifileupload.ui.MultiFileUpload;
 import com.wcs.wcslib.vaadin.widget.multifileupload.ui.UploadFinishedHandler;
 import com.wcs.wcslib.vaadin.widget.multifileupload.ui.UploadStateWindow;
+import nosql.docdb.database.MongoDB;
+import nosql.docdb.doc_parser.object_model.DbDocument;
 import server.droporchoose.UploadComponent;
 
 import java.io.InputStream;
@@ -27,14 +29,21 @@ public class AdminWindow extends Window {
     private void uploadFailed(String fileName, Path file) {
     }
 
-    public AdminWindow() {
+    public AdminWindow(MongoDB db) {
         super("Страница администратора"); // Set window caption
         center();
         setClosable(true);
         setModal(false);
         VerticalLayout verticalLayout = new VerticalLayout();
-        Label overAllDocs = new Label("Всего документов: 4");
-        Label lastLoadTime = new Label("Последняя загрузка: 15.10.19");
+        Label overAllDocs = new Label("Всего документов: "+db.getCountOfDocuments());
+        Label lastLoadTime = new Label(
+                "Последняя загрузка: "+
+                    db.getLastDocument()
+                        .map(DbDocument::getAddDate)
+                        .map(DateUtil::formatDate)
+                        .orElse("-")
+
+        );
         verticalLayout.addComponent(overAllDocs);
         verticalLayout.addComponent(lastLoadTime);
 

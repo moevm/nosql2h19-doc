@@ -9,6 +9,7 @@ import nosql.docdb.doc_parser.object_model.Table;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 public  class FileInfoWindow extends Window {
     public FileInfoWindow(DbDocument record) {
@@ -19,7 +20,7 @@ public  class FileInfoWindow extends Window {
         setModal(false);
         VerticalLayout layout = new VerticalLayout();
         setContent(layout);
-        Label dateOfLoad = new Label("Дата загрузки: "+ LocalDateTime.ofInstant(record.getAddDate(), ZoneId.systemDefault()));
+        Label dateOfLoad = new Label("Дата загрузки: "+ DateUtil.formatDate(record.getAddDate()));
         Label imageCount = new Label("Количество картинок: "+record.getDocumentObjects().stream().filter(obj->obj instanceof Picture).count());
         Label tableCount = new Label("Количество таблиц: "+record.getDocumentObjects().stream().filter(obj->obj instanceof Table).count());
         layout.addComponents(dateOfLoad,imageCount,tableCount);

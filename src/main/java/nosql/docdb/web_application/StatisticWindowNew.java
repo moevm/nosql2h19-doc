@@ -3,6 +3,7 @@ package nosql.docdb.web_application;
 import com.google.gson.Gson;
 import com.vaadin.server.ExternalResource;
 import com.vaadin.ui.*;
+import nosql.docdb.doc_parser.object_model.DbDocument;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +13,7 @@ import java.util.stream.Stream;
 
 public class StatisticWindowNew extends Window {
 
-        public StatisticWindowNew(MainView.FileFullInfo record) {
+        public StatisticWindowNew(DbDocument record) {
                 super("Статистика по документу \"" + record.getName() + "\""); // Set window caption
 
                 //---
@@ -81,7 +82,7 @@ interface Refreshable extends Component{
 class LinearStatisticTab extends VerticalLayout implements Refreshable{
         private  final  HighChartFrame htmlFrame;
         private final Button buildButton;
-        LinearStatisticTab(MainView.FileFullInfo record, /**/PlotData allDta, PlotData curData /**/, AnalisisData analisisData) {
+        LinearStatisticTab(DbDocument record, /**/PlotData allDta, PlotData curData /**/, AnalisisData analisisData) {
                 System.out.println("INIT");
                 setSizeFull();
                 htmlFrame = new HighChartFrame("/static/highcharts.html");
@@ -106,7 +107,7 @@ class BarStatisticTab extends VerticalLayout implements Refreshable{
         private final Button buildButton;
         private final CheckBox separatedTextsCheckBox;
         private final TextField searchTextField;
-        BarStatisticTab(MainView.FileFullInfo record) {
+        BarStatisticTab(DbDocument record) {
                 System.out.println("INIT");
                 setSizeFull();
                 htmlFrame = new HighChartFrame("/static/highcharts.html");

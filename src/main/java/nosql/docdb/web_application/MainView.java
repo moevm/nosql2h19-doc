@@ -4,18 +4,17 @@ import com.vaadin.contextmenu.GridContextMenu;
 import com.vaadin.server.StreamResource;
 import com.vaadin.ui.*;
 import lombok.SneakyThrows;
-import lombok.Value;
-import nosql.docdb.file_utils.FileUtills;
+import nosql.docdb.database.MongoDB;
+import nosql.docdb.doc_parser.object_model.DbDocument;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.util.Arrays;
-import java.util.List;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Optional;
 
 public class MainView extends VerticalLayout {
     private final BrowserFrame previewFrame;
-    private final Grid<FileFullInfo> resultsGrid;
+    private final Grid<DbDocument> resultsGrid;
     private final TextField queryField;
     private final Button searchButton;
     private final Button exportDB;
@@ -24,39 +23,47 @@ public class MainView extends VerticalLayout {
 
     private final Label countOfDocumentLabel;
     private final Button filterButton;
+    private final FilterWindow filterWindow;
+    private final MongoDB mongoDB=new MongoDB();
+
     @SneakyThrows
     public MainView(){
         setSizeFull();
         setMargin(false);
         previewFrame=new BrowserFrame(){{
             setSizeFull();
-
-            byte[] pdf;
-            try(FileInputStream fis=new FileInputStream("Лабы методичка.pdf")) {
-                pdf= FileUtills.readAllBytes(fis);
-            }
-
-            setSource(new StreamResource(() -> new ByteArrayInputStream(pdf), "Криптография. Лабораторный практикум.pdf"));
         }};
-
-        resultsGrid=new Grid<FileFullInfo>(){{
+        filterWindow=new FilterWindow(e->{});
+        UI.getCurrent().addWindow(filterWindow);
+        resultsGrid=new Grid<DbDocument>(){{
             setSizeFull();
-            addColumn(FileFullInfo::getName).setCaption("Документ");
-            addColumn(FileFullInfo::getCountOfPages).setCaption("Количество страниц");
-            addColumn(FileFullInfo::getSize).setCaption("Объем документа, Мб");
+            addColumn(DbDocument::getName).setCaption("Документ");
+            addColumn(DbDocument::getPageCount).setCaption("Количество страниц");
+            addColumn(d->{
+                NumberFormat formatter = new DecimalFormat("#0.00");
+                return formatter.format(d.getSize()/1024.0/1024);
+            }).setCaption("Объем документа, Мб");
 
-            setItems(genSampleRecords());
-            new GridContextMenu<FileFullInfo>(this){{
+            setItems(mongoDB.loadDocuments(MongoDB.Query.builder().limit(1000).build()));
+
+            addSelectionListener(e->{
+                e.getFirstSelectedItem()
+                        .ifPresent(doc->{
+                            ByteArrayInputStream pdfStream=new ByteArrayInputStream(mongoDB.loadRawBytes(doc).getRight());
+                            previewFrame.setSource(new StreamResource(()->pdfStream,doc.getName()+".pdf"));
+                        });
+            });
+
+            new GridContextMenu<DbDocument>(this){{
                 addGridFooterContextMenuListener(e->removeItems());
                 addGridHeaderContextMenuListener(e->removeItems());
                 addGridBodyContextMenuListener(e->{
                     removeItems();
                     if(!getSelectedItems().contains(e.getItem()))return;
                     addItem("Дополнительно",ee->{
-                        // open page
                         UI.getCurrent().addWindow(new FileInfoWindow(e.getItem()));
                     });
-                    FileFullInfo fileFullInfo =e.getItem();
+                    DbDocument fileFullInfo =e.getItem();
 
                 });
             }};
@@ -65,45 +72,52 @@ public class MainView extends VerticalLayout {
         queryField=new TextField(){{
             setWidth("100%");
         }};
-        searchButton=new Button("Поиск",e->{
 
-        });
         filterButton = new Button("Фильтры");
         filterButton.addClickListener(e->{
-            UI.getCurrent().addWindow(new FilterWindow());
-
+            filterWindow.setVisible(true);
         });
         filterButton.setStyleName("i-hPadding3 small i-small");
 
         searchInTextCheckBox = new CheckBox("Искать в тексте");
-        countOfDocumentLabel =new Label("Количество документов: 4");
+        countOfDocumentLabel =new Label("Количество документов: "+mongoDB.getCountOfDocuments());
         exportDB = new Button("Страница администратора");
         exportDB.setStyleName("i-hPadding3 small i-small");
         showStatisticButton = new Button( "Статистика");
         showStatisticButton.setStyleName("i-hPadding3 small i-small");
         showStatisticButton.addClickListener(e->{
-            Optional<FileFullInfo> selected=resultsGrid.getSelectedItems().stream().findFirst();
+            Optional<DbDocument> selected=resultsGrid.getSelectedItems().stream().findFirst();
             selected.ifPresent(fileFullInfo -> UI.getCurrent().addWindow(new StatisticWindowNew(fileFullInfo)));
         });
 
 
         exportDB.addClickListener(e->{
-            UI.getCurrent().addWindow(new AdminWindow());
+            UI.getCurrent().addWindow(new AdminWindow(mongoDB));
         });
 
 
+        searchButton=new Button("Поиск",e->{
+            FilterWindow.FilterWindowParams filters=filterWindow.getValue();
+            MongoDB.Query query= MongoDB.Query.builder()
+                    .limit(1000)
+                    .minPageCount(filters.getPageCount().getLeft())
+                    .maxPageCount(filters.getPageCount().getRight())
+                    .minSize(filters.getSize().getLeft()*1024)
+                    .maxSize(filters.getSize().getRight()*1024)
+                    .format(filters.getDocFormat())
+                    .findMode(searchInTextCheckBox.getValue()? MongoDB.Query.FindMode.EVERYWHERE: MongoDB.Query.FindMode.IN_FILE_NAME)
+                    .findString(queryField.getValue())
+                    .build();
+            System.out.println(query);
+            resultsGrid.setItems(mongoDB.loadDocuments(query));
+        });
 
         HorizontalSplitPanel horizontalSplit=new HorizontalSplitPanel(){{
             setSizeFull();
             setFirstComponent(new VerticalLayout(){{
                 setSizeFull();
                 addComponents(
-                        new HorizontalLayout(filterButton,showStatisticButton){{
-                            //setWidth("100%");
-
-                            //setComponentAlignment(showStatisticButton,Alignment.MIDDLE_RIGHT);
-
-                        }},
+                        new HorizontalLayout(filterButton,showStatisticButton){{ }},
                         new HorizontalLayout(queryField,searchButton,searchInTextCheckBox){{
                             setWidth("100%");
                             setComponentAlignment(searchInTextCheckBox,Alignment.MIDDLE_CENTER);
@@ -113,10 +127,8 @@ public class MainView extends VerticalLayout {
                         new HorizontalLayout(countOfDocumentLabel,exportDB) {{
                             setMargin(false);
                             setWidth("100%");
+                            setComponentAlignment(countOfDocumentLabel,Alignment.MIDDLE_LEFT);
                             setComponentAlignment(exportDB,Alignment.MIDDLE_RIGHT);
-                               setExpandRatio(exportDB,1);
-                               setExpandRatio(countOfDocumentLabel,3);
-
                         }}
                 );
                 setExpandRatio(resultsGrid,1);
@@ -126,34 +138,6 @@ public class MainView extends VerticalLayout {
 
 
         addComponent(horizontalSplit);
-    }
-
-    @Value
-    public static class FileFullInfo {
-        final String name;
-        final int countOfImages;
-        final int countOfTables;
-        final int countOfPages;
-        final double size;
-        final String dateOfCreate;
-        final String dateOfLoad;
-
-        public String getOfDateCreateString(){
-            return dateOfCreate;
-        }
-        public String getDateOfLoadString(){
-            return dateOfLoad;
-        }
-    }
-
-
-    public static List<FileFullInfo> genSampleRecords(){
-        return Arrays.asList(
-                new FileFullInfo("Энциклопедия обо всем",100,100, 300,20.2,"01.01.2015","01.02.2015"),
-                new FileFullInfo("Уголовный кодекс", 0, 0,600,10.1,"11.12.2015","05.11.2016"),
-                new FileFullInfo("ТОЭ. Методическое пособие", 8,10,115,5.9,"01.11.2012","01.02.2015"),
-                new FileFullInfo("Криптография. Лабораторный практикум",18,11,58,3.2,"31.01.2018","15.04.2019")
-        );
     }
 }
 

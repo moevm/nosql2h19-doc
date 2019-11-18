@@ -218,16 +218,18 @@ public class MongoDB{
         @AllArgsConstructor
         @Getter
         public enum DocFormat{
-            FREE_FORM(Filters.exists("_id")),
-            WITHOUT_TITLES(Filters.size("paragraphs",1)),
+            FREE_FORM(Filters.exists("_id"),"Без ограничений"),
+            WITHOUT_TITLES(Filters.size("paragraphs",1),"Без заголовков"),
             EXACT_STRUCTURE(
                     Filters.and(
                             Filters.elemMatch("paragraphs",Filters.regex("name",".*Цель работы.*")),
                             Filters.elemMatch("paragraphs",Filters.regex("name",".*Выводы.*"))
-                    )
+                    ),
+                    "С заданной структурой"
             );
 
             private final Bson filter;
+            private final String description;
         }
     }
 
@@ -241,7 +243,7 @@ public class MongoDB{
 
     @SneakyThrows
     public static void main(String[] args) {
-        ParsedDocument document= DocumentConverter.importFromDoc("dsp.docx", FileUtills.readAllBytes("documents/TsOS_lab_1.docx"));
+        //ParsedDocument document= DocumentConverter.importFromDoc("dsp.docx", FileUtills.readAllBytes("documents/TsOS_lab_1.docx"));
         MongoDB db=new MongoDB();
         //db.addDocument(document);
 
@@ -253,7 +255,7 @@ public class MongoDB{
                 db.loadDocuments(
                         Query.builder()
                                 .findString("лист")
-                                .findMode(Query.FindMode.IN_FILE_NAME)
+                                .findMode(Query.FindMode.EVERYWHERE)
                                 .minSize(2522630)
                                 .maxSize(2522635)
                                 .format(Query.DocFormat.EXACT_STRUCTURE)

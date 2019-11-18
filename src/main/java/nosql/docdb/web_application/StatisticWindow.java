@@ -3,6 +3,7 @@ package nosql.docdb.web_application;
 import com.google.gson.Gson;
 import com.vaadin.server.ExternalResource;
 import com.vaadin.ui.*;
+import nosql.docdb.doc_parser.object_model.DbDocument;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,7 +17,7 @@ public class StatisticWindow extends Window {
         private final CheckBox separatedTextsCheckBox;
         private PlotData allDta =
                 new PlotData("Все документы",new ArrayList<>(),new ArrayList<>());
-        public StatisticWindow(MainView.FileFullInfo record) {
+        public StatisticWindow(DbDocument record) {
                 super("Статистика по документу \""+record.getName()+"\""); // Set window caption
                 center();
                 setClosable(true);
