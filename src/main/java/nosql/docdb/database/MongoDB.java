@@ -17,9 +17,9 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Sorts;
 import lombok.*;
-import nosql.docdb.doc_parser.DocumentConverter;
 import nosql.docdb.doc_parser.object_model.*;
-import nosql.docdb.file_utils.FileUtills;
+import nosql.docdb.utils.FileUtils;
+import nosql.docdb.utils.Utils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.bson.*;
@@ -32,7 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -122,32 +124,38 @@ public class MongoDB{
         ).stream().findFirst();
     }
 
-    public void exportToZip(OutputStream os) throws IOException {
-        List<String> ids=loadIds();
-        try(ZipOutputStream zos=new ZipOutputStream(os)) {
-            ids.stream()
-                    .map(id->Pair.of(id,loadById(id)))
-                    .filter(p->p.getRight().isPresent())
-                    .map(p->Pair.of(p.getLeft(),p.getRight().get()))
-                    .map(p-> Triple.of(p.getLeft(),p.getRight(),loadRawBytes(p.getRight())))
-                    .forEach(p->{
-                        safe(()->{
-                            zos.putNextEntry(new ZipEntry(p.getMiddle().getRawFileId()));
-                            zos.write(p.getRight().getLeft());
-                            zos.closeEntry();
-                            zos.putNextEntry(new ZipEntry(p.getMiddle().getPdfFileId()));
-                            zos.write(p.getRight().getRight());
-                            zos.closeEntry();
-                            zos.putNextEntry(new ZipEntry(p.getLeft()));
-                            zos.write(GSON.toJson(p.getMiddle()).getBytes());
-                            zos.closeEntry();
-                            return null;
+    public Future<?> exportToZip(OutputStream os) {
+        ExecutorService es= Executors.newFixedThreadPool(1);
+        Future<?> task=es.submit(()->{
+            MongoDB db=new MongoDB();
+            List<String> ids=db.loadIds();
+            try(ZipOutputStream zos=new ZipOutputStream(os)) {
+                ids.stream()
+                        .map(id->Pair.of(id,db.loadById(id)))
+                        .filter(p->p.getRight().isPresent())
+                        .map(p->Pair.of(p.getLeft(),p.getRight().get()))
+                        .map(p-> Triple.of(p.getLeft(),p.getRight(),db.loadRawBytes(p.getRight())))
+                        .forEach(p->{
+                            Utils.safe(()->{
+                                zos.putNextEntry(new ZipEntry(p.getMiddle().getRawFileId()));
+                                zos.write(p.getRight().getLeft());
+                                zos.closeEntry();
+                                zos.putNextEntry(new ZipEntry(p.getMiddle().getPdfFileId()));
+                                zos.write(p.getRight().getRight());
+                                zos.closeEntry();
+                                zos.putNextEntry(new ZipEntry(p.getLeft()));
+                                zos.write(GSON.toJson(p.getMiddle()).getBytes());
+                                zos.closeEntry();
+                            });
                         });
-                    });
-            zos.putNextEntry(new ZipEntry("content"));
-            zos.write(GSON.toJson(ids).getBytes());
-            zos.closeEntry();
-        }
+                zos.putNextEntry(new ZipEntry("content"));
+                zos.write(GSON.toJson(ids).getBytes());
+                zos.closeEntry();
+                return null;
+            }
+        });
+        es.shutdown();
+        return task;
     }
 
     public void importFromZip(String filePath) throws IOException {
@@ -155,22 +163,13 @@ public class MongoDB{
             InputStream is=zf.getInputStream(new ZipEntry("content"));
             List<String> ids=GSON.fromJson(new InputStreamReader(is),new TypeToken<List<String>>(){}.getType());
             ids.stream().forEach(id->{
-                safe(()->{
+                Utils.safe(()->{
                     DbDocument document=GSON.fromJson(new InputStreamReader(zf.getInputStream(new ZipEntry(id))),DbDocument.class);
-                    byte[] bytes=FileUtills.readAllBytes(zf.getInputStream(new ZipEntry(document.getRawFileId())));
-                    byte[] pdfBytes=FileUtills.readAllBytes(zf.getInputStream(new ZipEntry(document.getPdfFileId())));
+                    byte[] bytes= FileUtils.readAllBytes(zf.getInputStream(new ZipEntry(document.getRawFileId())));
+                    byte[] pdfBytes= FileUtils.readAllBytes(zf.getInputStream(new ZipEntry(document.getPdfFileId())));
                     addDocument(document.toParsedDocument(bytes,pdfBytes));
-                    return null;
                 });
             });
-        }
-    }
-
-    private static <T> void safe(Callable<T> action){
-        try {
-            action.call();
-        }catch (Exception ignored){
-
         }
     }
 

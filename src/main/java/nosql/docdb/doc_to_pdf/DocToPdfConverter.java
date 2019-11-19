@@ -1,11 +1,9 @@
 package nosql.docdb.doc_to_pdf;
 
-import lombok.SneakyThrows;
-import nosql.docdb.file_utils.FileUtills;
+import nosql.docdb.utils.FileUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.UUID;
 
 public class DocToPdfConverter {
@@ -18,7 +16,7 @@ public class DocToPdfConverter {
         }
 
         Process p=Runtime.getRuntime().exec("doc2pdf --stdout "+in.getAbsolutePath());
-        byte[] pdf= FileUtills.readAllBytes(p.getInputStream());
+        byte[] pdf= FileUtils.readAllBytes(p.getInputStream());
         in.delete();
         return pdf;
     }

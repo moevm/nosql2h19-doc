@@ -109,6 +109,7 @@ public class MainView extends VerticalLayout {
                     .findString(queryField.getValue())
                     .build();
             System.out.println(query);
+            countOfDocumentLabel.setValue("Количество документов: "+mongoDB.getCountOfDocuments());
             resultsGrid.setItems(mongoDB.loadDocuments(query));
         });
 

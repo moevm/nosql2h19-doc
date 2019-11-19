@@ -1,11 +1,11 @@
-package nosql.docdb.file_utils;
+package nosql.docdb.utils;
 
 import lombok.SneakyThrows;
 
 import java.io.*;
 import java.util.Arrays;
 
-public class FileUtills {
+public class FileUtils {
     private static final int DEFAULT_BUFFER_SIZE = 8192;
     private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
 

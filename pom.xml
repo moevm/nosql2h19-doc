@@ -14,7 +14,7 @@
 
         <vaadin.widgetset.mode>local</vaadin.widgetset.mode>
         <vaadin.version>8.8.2</vaadin.version>
-        <jetty.version>9.2.3.v20140905</jetty.version>
+        <jetty.version>9.4.22.v20191022</jetty.version>
     </properties>
 
     <repositories>
@@ -70,6 +70,11 @@
 
         <dependency>
             <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-push</artifactId>
+            <version>${vaadin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
             <artifactId>vaadin-server</artifactId>
             <version>${vaadin.version}</version>
             <type>jar</type>
@@ -108,6 +113,19 @@
             <version>${jetty.version}</version>
             <type>jar</type>
         </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-continuation</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>websocket-server</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+
 
         <dependency>
             <groupId>com.wcs.wcslib</groupId>

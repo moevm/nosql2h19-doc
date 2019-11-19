@@ -4,13 +4,11 @@ import lombok.SneakyThrows;
 import nosql.docdb.doc_parser.object_model.ParsedDocument;
 import nosql.docdb.doc_parser.object_model.*;
 import nosql.docdb.doc_to_pdf.DocToPdfConverter;
-import nosql.docdb.file_utils.FileUtills;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import nosql.docdb.utils.FileUtils;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.xwpf.usermodel.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,7 +20,7 @@ import java.util.stream.Stream;
 public class DocumentConverter {
     @SneakyThrows
     public static void main(String[] args) {
-        ParsedDocument document=importFromDoc("dsp.docx", FileUtills.readAllBytes("documents/TsOS_lab_1.docx"));
+        ParsedDocument document=importFromDoc("dsp.docx", FileUtils.readAllBytes("documents/TsOS_lab_1.docx"));
         System.out.println(document);
 
     }
