@@ -9,7 +9,6 @@ import nosql.docdb.database.MongoDB;
 import nosql.docdb.doc_parser.DocumentConverter;
 import nosql.docdb.doc_parser.object_model.DbDocument;
 import nosql.docdb.utils.FileUtils;
-import nosql.docdb.utils.Utils;
 import org.apache.commons.compress.utils.IOUtils;
 import server.droporchoose.UploadComponent;
 

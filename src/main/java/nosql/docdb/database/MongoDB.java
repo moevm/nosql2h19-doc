@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -240,17 +241,57 @@ public class MongoDB{
         return Pair.of(doc.toByteArray(),pdf.toByteArray());
     }
 
+    @Value
+    private static class AggregationResult{
+        double _id;
+        SumCount value;
+        @Value
+        private static class SumCount{
+            double sum;
+            double count;
+        }
+    }
+
+    @SneakyThrows
+    public List<Pair<Integer,Double>> getImagesAndPages(Bson filter){
+        String mapFunction=new String(FileUtils.readAllBytes(MongoDB.class.getResourceAsStream("/pagesAndImages/map.js")));
+        String reduceFunction=new String(FileUtils.readAllBytes(MongoDB.class.getResourceAsStream("/pagesAndImages/reduce.js")));
+
+        List<AggregationResult> rawResults=new ArrayList<>();
+        collection.mapReduce(mapFunction, reduceFunction)
+                .forEach((Consumer<Document>) doc -> rawResults.add(GSON.fromJson(doc.toJson(),AggregationResult.class)));
+        return rawResults.stream()
+                .map(r->Pair.of((int)r.get_id(), r.getValue().getSum()/r.getValue().getCount()))
+                .collect(Collectors.toList());
+    }
+
+    @SneakyThrows
+    public List<Pair<Integer,Double>> getImagesAndTables(Bson filter){
+        String mapFunction=new String(FileUtils.readAllBytes(MongoDB.class.getResourceAsStream("/pagesAndTables/map.js")));
+        String reduceFunction=new String(FileUtils.readAllBytes(MongoDB.class.getResourceAsStream("/pagesAndTables/reduce.js")));
+
+        List<AggregationResult> rawResults=new ArrayList<>();
+        collection.mapReduce(mapFunction, reduceFunction)
+                .forEach((Consumer<Document>) doc -> rawResults.add(GSON.fromJson(doc.toJson(),AggregationResult.class)));
+        return rawResults.stream()
+                .map(r->Pair.of((int)r.get_id(), r.getValue().getSum()/r.getValue().getCount()))
+                .collect(Collectors.toList());
+    }
+
     @SneakyThrows
     public static void main(String[] args) {
         //ParsedDocument document= DocumentConverter.importFromDoc("dsp.docx", FileUtills.readAllBytes("documents/TsOS_lab_1.docx"));
         MongoDB db=new MongoDB();
+
+        System.out.println(db.getImagesAndPages());
+        System.out.println(db.getImagesAndTables());
         //db.addDocument(document);
 
         //List<DbDocument> dbDocuments=db.loadDocuments(Query.builder().limit(1).build());
         //dbDocuments.stream()
         //        .forEach(d->System.out.println(d));
 
-        System.out.println(
+        /*System.out.println(
                 db.loadDocuments(
                         Query.builder()
                                 .findString("лист")
@@ -264,7 +305,7 @@ public class MongoDB{
                 .map(DbDocument::getParagraphs)
                 .map(p->p.stream().map(Paragraph::getName).collect(Collectors.toList()))
                 .collect(Collectors.toList())
-        );
+        );*/
 
         //db.importFromZip("export.zip");
     }

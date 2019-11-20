@@ -1,4 +1,4 @@
-package nosql.docdb.web_application;
+package nosql.docdb.web_application.statistic_window;
 
 import java.util.ArrayList;
 

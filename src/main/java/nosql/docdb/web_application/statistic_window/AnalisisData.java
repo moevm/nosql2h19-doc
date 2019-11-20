@@ -1,4 +1,4 @@
-package nosql.docdb.web_application;
+package nosql.docdb.web_application.statistic_window;
 
 public class AnalisisData{
         public AnalisisData(String xAxis, String yAxis, String plotName) {

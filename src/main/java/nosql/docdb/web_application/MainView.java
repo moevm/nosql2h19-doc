@@ -6,6 +6,7 @@ import com.vaadin.ui.*;
 import lombok.SneakyThrows;
 import nosql.docdb.database.MongoDB;
 import nosql.docdb.doc_parser.object_model.DbDocument;
+import nosql.docdb.web_application.statistic_window.StatisticWindowNew;
 
 import java.io.ByteArrayInputStream;
 import java.text.DecimalFormat;
