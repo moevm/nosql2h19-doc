@@ -13,9 +13,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Projections;
-import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.*;
 import lombok.*;
 import nosql.docdb.doc_parser.object_model.*;
 import nosql.docdb.utils.FileUtils;
@@ -28,10 +26,7 @@ import org.bson.types.ObjectId;
 
 import java.io.*;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -44,6 +39,7 @@ import java.util.zip.ZipOutputStream;
 
 
 public class MongoDB{
+    private static final Bson ALWAYS_TRUE_FILTER=Filters.exists("_id");
     private final MongoCollection<org.bson.Document> collection;
     private final GridFSBucket gridFSBucket;
     private static final Gson GSON=new GsonBuilder()
@@ -218,7 +214,7 @@ public class MongoDB{
         @AllArgsConstructor
         @Getter
         public enum DocFormat{
-            FREE_FORM(Filters.exists("_id"),"Без ограничений"),
+            FREE_FORM(ALWAYS_TRUE_FILTER,"Без ограничений"),
             WITHOUT_TITLES(Filters.size("paragraphs",1),"Без заголовков"),
             EXACT_STRUCTURE(
                     Filters.and(
@@ -244,37 +240,66 @@ public class MongoDB{
     @Value
     private static class AggregationResult{
         double _id;
-        SumCount value;
-        @Value
-        private static class SumCount{
-            double sum;
-            double count;
-        }
+        double objects;
     }
 
     @SneakyThrows
     public List<Pair<Integer,Double>> getImagesAndPages(Bson filter){
-        String mapFunction=new String(FileUtils.readAllBytes(MongoDB.class.getResourceAsStream("/pagesAndImages/map.js")));
-        String reduceFunction=new String(FileUtils.readAllBytes(MongoDB.class.getResourceAsStream("/pagesAndImages/reduce.js")));
-
         List<AggregationResult> rawResults=new ArrayList<>();
-        collection.mapReduce(mapFunction, reduceFunction)
-                .forEach((Consumer<Document>) doc -> rawResults.add(GSON.fromJson(doc.toJson(),AggregationResult.class)));
+        collection.aggregate(
+                Arrays.asList(
+                        Aggregates.match(filter),
+                        Aggregates.project(
+                                Projections.fields(
+                                        Projections.include("pageCount"),
+                                        Projections.computed("documentObjects", Document.parse("{ \n" +
+                                                "            $filter: { input: \"$documentObjects\",  as: 'd',  cond: {$eq: [\"$$d.type\", \"Picture\"]} } \n" +
+                                                "        } "))
+                                )
+                        ),
+                        Aggregates.project(
+                                Projections.fields(
+                                        Projections.include("pageCount"),
+                                        Projections.computed("pictures",new Document("$size", "$documentObjects" ))
+                                )
+                        ),
+                        Aggregates.group("$pageCount", Accumulators.avg("objects","$pictures"))
+                )
+        ).forEach((Consumer<Document>) doc -> rawResults.add(GSON.fromJson(doc.toJson(),AggregationResult.class)));
+
         return rawResults.stream()
-                .map(r->Pair.of((int)r.get_id(), r.getValue().getSum()/r.getValue().getCount()))
+                .map(r->Pair.of((int)r.get_id(),r.getObjects()))
+                .sorted(Comparator.comparing(Pair::getKey))
                 .collect(Collectors.toList());
     }
 
     @SneakyThrows
-    public List<Pair<Integer,Double>> getImagesAndTables(Bson filter){
-        String mapFunction=new String(FileUtils.readAllBytes(MongoDB.class.getResourceAsStream("/pagesAndTables/map.js")));
-        String reduceFunction=new String(FileUtils.readAllBytes(MongoDB.class.getResourceAsStream("/pagesAndTables/reduce.js")));
-
+    public List<Pair<Integer,Double>> getTablesAndPages(Bson filter){
         List<AggregationResult> rawResults=new ArrayList<>();
-        collection.mapReduce(mapFunction, reduceFunction)
-                .forEach((Consumer<Document>) doc -> rawResults.add(GSON.fromJson(doc.toJson(),AggregationResult.class)));
+        collection.aggregate(
+                Arrays.asList(
+                        Aggregates.match(filter),
+                        Aggregates.project(
+                                Projections.fields(
+                                        Projections.include("pageCount"),
+                                        Projections.computed("documentObjects", Document.parse("{ \n" +
+                                                "            $filter: { input: \"$documentObjects\",  as: 'd',  cond: {$eq: [\"$$d.type\", \"Table\"]} } \n" +
+                                                "        } "))
+                                )
+                        ),
+                        Aggregates.project(
+                                Projections.fields(
+                                        Projections.include("pageCount"),
+                                        Projections.computed("tables",new Document("$size", "$documentObjects" ))
+                                )
+                        ),
+                        Aggregates.group("$pageCount", Accumulators.avg("objects","$tables"))
+                )
+        ).forEach((Consumer<Document>) doc -> rawResults.add(GSON.fromJson(doc.toJson(),AggregationResult.class)));
+
         return rawResults.stream()
-                .map(r->Pair.of((int)r.get_id(), r.getValue().getSum()/r.getValue().getCount()))
+                .map(r->Pair.of((int)r.get_id(),r.getObjects()))
+                .sorted(Comparator.comparing(Pair::getKey))
                 .collect(Collectors.toList());
     }
 
@@ -283,8 +308,8 @@ public class MongoDB{
         //ParsedDocument document= DocumentConverter.importFromDoc("dsp.docx", FileUtills.readAllBytes("documents/TsOS_lab_1.docx"));
         MongoDB db=new MongoDB();
 
-        System.out.println(db.getImagesAndPages());
-        System.out.println(db.getImagesAndTables());
+        System.out.println(db.getImagesAndPages(ALWAYS_TRUE_FILTER));
+        System.out.println(db.getTablesAndPages(ALWAYS_TRUE_FILTER));
         //db.addDocument(document);
 
         //List<DbDocument> dbDocuments=db.loadDocuments(Query.builder().limit(1).build());
