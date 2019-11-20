@@ -87,8 +87,7 @@ public class MainView extends VerticalLayout {
         showStatisticButton = new Button( "Статистика");
         showStatisticButton.setStyleName("i-hPadding3 small i-small");
         showStatisticButton.addClickListener(e->{
-            Optional<DbDocument> selected=resultsGrid.getSelectedItems().stream().findFirst();
-            selected.ifPresent(fileFullInfo -> UI.getCurrent().addWindow(new StatisticWindowNew(fileFullInfo)));
+            UI.getCurrent().addWindow(new StatisticWindowNew(mongoDB,readQuery()));
         });
 
 
@@ -98,17 +97,7 @@ public class MainView extends VerticalLayout {
 
 
         searchButton=new Button("Поиск",e->{
-            FilterWindow.FilterWindowParams filters=filterWindow.getValue();
-            MongoDB.Query query= MongoDB.Query.builder()
-                    .limit(1000)
-                    .minPageCount(filters.getPageCount().getLeft())
-                    .maxPageCount(filters.getPageCount().getRight())
-                    .minSize(filters.getSize().getLeft()*1024)
-                    .maxSize(filters.getSize().getRight()*1024)
-                    .format(filters.getDocFormat())
-                    .findMode(searchInTextCheckBox.getValue()? MongoDB.Query.FindMode.EVERYWHERE: MongoDB.Query.FindMode.IN_FILE_NAME)
-                    .findString(queryField.getValue())
-                    .build();
+            MongoDB.Query query= readQuery();
             System.out.println(query);
             countOfDocumentLabel.setValue("Количество документов: "+mongoDB.getCountOfDocuments());
             resultsGrid.setItems(mongoDB.loadDocuments(query));
@@ -140,6 +129,20 @@ public class MainView extends VerticalLayout {
 
 
         addComponent(horizontalSplit);
+    }
+
+    private MongoDB.Query readQuery(){
+        FilterWindow.FilterWindowParams filters=filterWindow.getValue();
+        return MongoDB.Query.builder()
+                .limit(1000)
+                .minPageCount(filters.getPageCount().getLeft())
+                .maxPageCount(filters.getPageCount().getRight())
+                .minSize(filters.getSize().getLeft()*1024)
+                .maxSize(filters.getSize().getRight()*1024)
+                .format(filters.getDocFormat())
+                .findMode(searchInTextCheckBox.getValue()? MongoDB.Query.FindMode.EVERYWHERE: MongoDB.Query.FindMode.IN_FILE_NAME)
+                .findString(queryField.getValue())
+                .build();
     }
 }
 

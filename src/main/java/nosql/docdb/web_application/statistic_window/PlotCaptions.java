@@ -1,7 +1,7 @@
 package nosql.docdb.web_application.statistic_window;
 
-public class AnalisisData{
-        public AnalisisData(String xAxis, String yAxis, String plotName) {
+public class PlotCaptions {
+        public PlotCaptions(String xAxis, String yAxis, String plotName) {
                 this.xAxis = xAxis;
                 this.yAxis = yAxis;
                 this.plotName = plotName;

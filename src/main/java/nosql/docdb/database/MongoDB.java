@@ -88,17 +88,21 @@ public class MongoDB{
                 .map(d->GSON.fromJson(d.toJson(),DbDocument.class));
     }
 
+    private Bson queryToFilter(Query query){
+        return Filters.and(
+                query.getFindMode().getFilter().apply(query.getFindString()),
+                Filters.gte("pageCount",query.getMinPageCount()),
+                Filters.lte("pageCount",query.getMaxPageCount()),
+                Filters.gte("size",query.getMinSize()),
+                Filters.lte("size",query.getMaxSize()),
+                query.getFormat().getFilter()
+        );
+    }
+
     public List<DbDocument> loadDocuments(Query query){
         List<DbDocument> results=new ArrayList<>();
         collection.find()
-                .filter(Filters.and(
-                        query.getFindMode().getFilter().apply(query.getFindString()),
-                        Filters.gte("pageCount",query.getMinPageCount()),
-                        Filters.lte("pageCount",query.getMaxPageCount()),
-                        Filters.gte("size",query.getMinSize()),
-                        Filters.lte("size",query.getMaxSize()),
-                        query.getFormat().getFilter()
-                ))
+                .filter(queryToFilter(query))
                 .sort(query.getSortDirection().getSortDirection().apply(query.getSortField()))
                 .limit(query.getLimit())
                 .cursor().forEachRemaining(d->{
@@ -244,11 +248,11 @@ public class MongoDB{
     }
 
     @SneakyThrows
-    public List<Pair<Integer,Double>> getImagesAndPages(Bson filter){
+    public List<Pair<Integer,Double>> getImagesAndPages(Query query){
         List<AggregationResult> rawResults=new ArrayList<>();
         collection.aggregate(
                 Arrays.asList(
-                        Aggregates.match(filter),
+                        Aggregates.match(queryToFilter(query)),
                         Aggregates.project(
                                 Projections.fields(
                                         Projections.include("pageCount"),
@@ -274,11 +278,11 @@ public class MongoDB{
     }
 
     @SneakyThrows
-    public List<Pair<Integer,Double>> getTablesAndPages(Bson filter){
+    public List<Pair<Integer,Double>> getTablesAndPages(Query query){
         List<AggregationResult> rawResults=new ArrayList<>();
         collection.aggregate(
                 Arrays.asList(
-                        Aggregates.match(filter),
+                        Aggregates.match(queryToFilter(query)),
                         Aggregates.project(
                                 Projections.fields(
                                         Projections.include("pageCount"),
@@ -308,8 +312,8 @@ public class MongoDB{
         //ParsedDocument document= DocumentConverter.importFromDoc("dsp.docx", FileUtills.readAllBytes("documents/TsOS_lab_1.docx"));
         MongoDB db=new MongoDB();
 
-        System.out.println(db.getImagesAndPages(ALWAYS_TRUE_FILTER));
-        System.out.println(db.getTablesAndPages(ALWAYS_TRUE_FILTER));
+        System.out.println(db.getImagesAndPages(Query.builder().build()));
+        System.out.println(db.getTablesAndPages(Query.builder().build()));
         //db.addDocument(document);
 
         //List<DbDocument> dbDocuments=db.loadDocuments(Query.builder().limit(1).build());
