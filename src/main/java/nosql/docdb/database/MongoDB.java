@@ -103,12 +103,25 @@ public class MongoDB{
         List<DbDocument> results=new ArrayList<>();
         collection.find()
                 .filter(queryToFilter(query))
+                .projection(Projections.metaTextScore("score"))
                 .sort(query.getSortDirection().getSortDirection().apply(query.getSortField()))
                 .limit(query.getLimit())
                 .cursor().forEachRemaining(d->{
                     results.add(GSON.fromJson(d.toJson(),DbDocument.class));
                 });
         return results;
+    }
+
+    public List<DbDocument> topNFulltextSearch(String query, int limit){
+        return loadDocuments(
+                Query.builder()
+                        .findString(query)
+                        .findMode(Query.FindMode.EVERYWHERE)
+                        .limit(limit)
+                        .sortField("score")
+                        .sortDirection(Query.SortDirection.TEXT_SCORE)
+                        .build()
+        );
     }
 
     public long getCountOfDocuments(){
@@ -210,7 +223,8 @@ public class MongoDB{
         @Getter
         public enum SortDirection{
             DESCENDING(Sorts::descending),
-            ASCENDING(Sorts::ascending);
+            ASCENDING(Sorts::ascending),
+            TEXT_SCORE(Sorts::metaTextScore);
 
             private final Function<String, Bson> sortDirection;
         }
@@ -312,8 +326,11 @@ public class MongoDB{
         //ParsedDocument document= DocumentConverter.importFromDoc("dsp.docx", FileUtills.readAllBytes("documents/TsOS_lab_1.docx"));
         MongoDB db=new MongoDB();
 
-        System.out.println(db.getImagesAndPages(Query.builder().build()));
-        System.out.println(db.getTablesAndPages(Query.builder().build()));
+        db.topNFulltextSearch("large",2)
+                .forEach(d-> System.out.println(d.getName()));
+
+        //System.out.println(db.getImagesAndPages(Query.builder().build()));
+        //System.out.println(db.getTablesAndPages(Query.builder().build()));
         //db.addDocument(document);
 
         //List<DbDocument> dbDocuments=db.loadDocuments(Query.builder().limit(1).build());
