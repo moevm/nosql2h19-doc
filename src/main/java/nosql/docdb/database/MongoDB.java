@@ -145,7 +145,7 @@ public class MongoDB{
         );
     }
 
-    public Pair<List<DbDocument>,Set<String>> topNFulltextSearch(String queryText, int limit){
+    public List<Pair<DbDocument,Integer>> topNFulltextSearch(String queryText, int limit){
         Query query=Query.builder()
                 .findString(queryText)
                 .findMode(Query.FindMode.EVERYWHERE)
@@ -156,7 +156,16 @@ public class MongoDB{
 
         List<DbDocument> documents=loadDocuments(query);
         Set<String> terms=getTermsFromTextSearchQuery(query);
-        return Pair.of(documents,terms);
+
+        return documents.stream()
+                .map(d->{
+                    int sum=terms.stream()
+                            .mapToInt(w->getCountOfWord(d,w))
+                            .sum();
+                    return Pair.of(d,sum);
+                })
+                .sorted(Comparator.comparing(p->-p.getRight()))
+                .collect(Collectors.toList());
     }
 
     public long getCountOfDocuments(){
@@ -356,16 +365,21 @@ public class MongoDB{
                 .collect(Collectors.toList());
     }
 
+    public static int getCountOfWord(DbDocument dbDocument, String word){
+        return GSON.toJson(dbDocument).split(word).length;
+    }
+
     @SneakyThrows
     public static void main(String[] args) {
         //ParsedDocument document= DocumentConverter.importFromDoc("dsp.docx", FileUtills.readAllBytes("documents/TsOS_lab_1.docx"));
         MongoDB db=new MongoDB();
 
-        db.topNFulltextSearch("large",2).getLeft()
-                .forEach(d-> System.out.println(d.getName()));
+        List<Pair<DbDocument, Integer>> result=db.topNFulltextSearch("вывод",2);
+        result.stream()
+                .map(d-> d.getLeft().getName()+": "+d.getRight())
+                .forEach(System.out::println);
 
-        db.topNFulltextSearch("алгоритм",2).getRight()
-                .forEach(t-> System.out.println(t));
+
 
         //System.out.println(db.getImagesAndPages(Query.builder().build()));
         //System.out.println(db.getTablesAndPages(Query.builder().build()));
