@@ -7,10 +7,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.*;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.model.*;
@@ -33,6 +30,7 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -99,29 +97,66 @@ public class MongoDB{
         );
     }
 
-    public List<DbDocument> loadDocuments(Query query){
-        List<DbDocument> results=new ArrayList<>();
-        collection.find()
+    public FindIterable<Document> toMongoQuery(Query query){
+        return collection.find()
                 .filter(queryToFilter(query))
                 .projection(Projections.metaTextScore("score"))
                 .sort(query.getSortDirection().getSortDirection().apply(query.getSortField()))
-                .limit(query.getLimit())
+                .limit(query.getLimit());
+    }
+
+    public List<DbDocument> loadDocuments(Query query){
+        List<DbDocument> results=new ArrayList<>();
+        toMongoQuery(query)
                 .cursor().forEachRemaining(d->{
                     results.add(GSON.fromJson(d.toJson(),DbDocument.class));
                 });
         return results;
     }
 
-    public List<DbDocument> topNFulltextSearch(String query, int limit){
-        return loadDocuments(
-                Query.builder()
-                        .findString(query)
-                        .findMode(Query.FindMode.EVERYWHERE)
-                        .limit(limit)
-                        .sortField("score")
-                        .sortDirection(Query.SortDirection.TEXT_SCORE)
-                        .build()
+    public Set<String> getTermsFromTextSearchQuery(Query query){
+        Map explain=GSON.fromJson(
+                toMongoQuery(query)
+                        .modifiers(new Document("$explain", true))
+                        .first()
+                        .toJson(),
+                Map.class
         );
+
+        return MongoDB.<Pair<String,Object>>flatify(
+                Pair.of("root",explain),
+                p->{
+                    if(!(p.getRight() instanceof Map))return Stream.empty();
+                    Map<String,Object> childs=(Map<String, Object>) p.getRight();
+                    return childs.entrySet().stream().map(e->Pair.of(e.getKey(),e.getValue()));
+                }
+        ).filter(p->p.getLeft().equals("terms"))
+        .map(Pair::getRight)
+        .filter(r->r instanceof List)
+        .map(r->(List)r)
+        .flatMap((Function<List, Stream<String>>)  s->s.stream().map(Object::toString))
+        .collect(Collectors.toSet());
+    }
+
+    public static <T>Stream<T> flatify(T root, Function<T,Stream<T>> childExtractor){
+        return Stream.concat(
+                Stream.of(root),
+                childExtractor.apply(root).flatMap(c->flatify(c,childExtractor))
+        );
+    }
+
+    public Pair<List<DbDocument>,Set<String>> topNFulltextSearch(String queryText, int limit){
+        Query query=Query.builder()
+                .findString(queryText)
+                .findMode(Query.FindMode.EVERYWHERE)
+                .limit(limit)
+                .sortField("score")
+                .sortDirection(Query.SortDirection.TEXT_SCORE)
+                .build();
+
+        List<DbDocument> documents=loadDocuments(query);
+        Set<String> terms=getTermsFromTextSearchQuery(query);
+        return Pair.of(documents,terms);
     }
 
     public long getCountOfDocuments(){
@@ -326,8 +361,11 @@ public class MongoDB{
         //ParsedDocument document= DocumentConverter.importFromDoc("dsp.docx", FileUtills.readAllBytes("documents/TsOS_lab_1.docx"));
         MongoDB db=new MongoDB();
 
-        db.topNFulltextSearch("large",2)
+        db.topNFulltextSearch("large",2).getLeft()
                 .forEach(d-> System.out.println(d.getName()));
+
+        db.topNFulltextSearch("алгоритм",2).getRight()
+                .forEach(t-> System.out.println(t));
 
         //System.out.println(db.getImagesAndPages(Query.builder().build()));
         //System.out.println(db.getTablesAndPages(Query.builder().build()));
