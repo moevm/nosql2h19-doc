@@ -261,6 +261,8 @@ public class MongoDB{
                 });
             });
         }
+
+        collection.createIndex(Indexes.text());
     }
 
     @Value
