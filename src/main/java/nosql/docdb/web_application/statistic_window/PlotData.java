@@ -10,7 +10,7 @@ public class PlotData{
                 this.xs = xs;
                 this.ys = ys;
         }
-        public PlotData(String parametrName, ArrayList<Number> ys) {
+        public PlotData(String parametrName, List<Number> ys) {
                 this.parametrName = parametrName;
                 this.ys = ys;
         }

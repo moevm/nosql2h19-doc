@@ -1,12 +1,14 @@
 package nosql.docdb.web_application.statistic_window;
 
-import com.vaadin.ui.*;
+import com.vaadin.ui.Component;
+import com.vaadin.ui.TabSheet;
+import com.vaadin.ui.Window;
 import nosql.docdb.database.MongoDB;
-import nosql.docdb.doc_parser.object_model.DbDocument;
-import nosql.docdb.web_application.views.HighChartFrame;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class StatisticWindowNew extends Window {
     private static final PlotCaptions imageChartCaptions = new PlotCaptions(
@@ -35,14 +37,18 @@ public class StatisticWindowNew extends Window {
         center();
         setClosable(true);
         setModal(false);
-        setWidth("500px");
-        setHeight("500px");
+        setWidth("75%");
+        setHeight("75%");
 
         setContent(new TabSheet() {{
             addTab(new LinearStatisticTab(mongoDB::getImagesAndPages, query, imageChartCaptions), "Cтатистика по количеству картинок");
             addTab(new LinearStatisticTab(mongoDB::getTablesAndPages, query, tablesChartCaptions), "Cтатистика по количеству таблиц");
 
-            addTab(new BarStatisticTab(null), "Частота встречаемости слова");
+            addTab(new BarStatisticTab(
+                    s->mongoDB.topNFulltextSearch(s,5).stream()
+                        .map(p-> Pair.of(p.getLeft().getName(),p.getRight()))
+                        .collect(Collectors.toList())
+            ), "Частота встречаемости слова");
             addSelectedTabChangeListener(e -> {
                 Component selectedTab = e.getTabSheet().getSelectedTab();
                 if (selectedTab instanceof Refreshable) ((Refreshable) selectedTab).onRefresh();
