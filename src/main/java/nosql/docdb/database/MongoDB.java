@@ -65,6 +65,7 @@ public class MongoDB{
         MongoDatabase database = mongoClient.getDatabase("mydb");
         collection = database.getCollection("documents");
         gridFSBucket=GridFSBuckets.create(database,"docx");
+        collection.createIndex(Indexes.text());
     }
 
     public void addDocument(ParsedDocument document){
