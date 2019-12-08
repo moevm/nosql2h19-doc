@@ -34,7 +34,7 @@ public class MainView extends VerticalLayout {
         previewFrame=new BrowserFrame(){{
             setSizeFull();
         }};
-        filterWindow=new FilterWindow(e->{});
+        filterWindow=new FilterWindow(e->{},mongoDB);
         UI.getCurrent().addWindow(filterWindow);
         resultsGrid=new Grid<DbDocument>(){{
             setSizeFull();

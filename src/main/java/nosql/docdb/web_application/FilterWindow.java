@@ -13,14 +13,21 @@ public class FilterWindow extends Window{
     private final ComboBox<MongoDB.Query.DocFormat> docFormatCombobox;
     private final Slider limitCountOfPagesSliderLayout;
     private final Slider limitWeightSliderLayout;
+    private final MongoDB mongoDB;
 
-    public FilterWindow(Consumer<FilterWindow> changeListener) {
+    public FilterWindow(Consumer<FilterWindow> changeListener, MongoDB mongoDB) {
         super("Фильтры"); // Set window caption
+        this.mongoDB=mongoDB;
+
+        limitWeightSliderLayout = new Slider(0,Integer.MAX_VALUE,"Объем документа, KB");
+        limitCountOfPagesSliderLayout = new Slider(0,Integer.MAX_VALUE,"Количество страниц");
+
         center();
         setClosable(true);
         setModal(false);
         setVisible(false);
         setWidth("40%");
+
         docFormatCombobox =new ComboBox<MongoDB.Query.DocFormat>("Режим поиска"){{
             setItemCaptionGenerator(MongoDB.Query.DocFormat::getDescription);
             setItems(MongoDB.Query.DocFormat.values());
@@ -29,8 +36,7 @@ public class FilterWindow extends Window{
             setWidth("50%");
         }};
 
-        limitWeightSliderLayout = new Slider(0,100000,"Объем документа, KB");
-        limitCountOfPagesSliderLayout = new Slider(0,10000,"Количество страниц");
+
 
         VerticalLayout upperPanel = new VerticalLayout(
                 docFormatCombobox,
@@ -65,5 +71,15 @@ public class FilterWindow extends Window{
     @Override
     public void close(){
         setVisible(false);
+    }
+
+    @Override
+    public void setVisible(boolean visible) {
+        super.setVisible(visible);
+        mongoDB.getPageRange()
+                .ifPresent(r->limitCountOfPagesSliderLayout.setRange(r.getLeft(),r.getRight()+1));
+
+        mongoDB.getSizeRange()
+                .ifPresent(r->limitWeightSliderLayout.setRange(r.getLeft()/1024,r.getRight()/1024+1));
     }
 }

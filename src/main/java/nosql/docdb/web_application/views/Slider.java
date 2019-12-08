@@ -11,7 +11,7 @@ public class Slider extends HorizontalLayout {
     public Slider(int min,int max,String caption){
         slider  = new RangeSlider(new Range(min, max));
         slider.setValue(new Range(min, max));
-        slider.setStep(10);
+        slider.setStep(1);
         slider.setWidth("100%");
           MarginPanel mp = new MarginPanel(slider) {{
               setHeight("45px");
@@ -22,6 +22,12 @@ public class Slider extends HorizontalLayout {
         setExpandRatio(mp,1);
         setWidth("100%");
         setMargin(false);
+    }
+
+    public void setRange(int min, int max){
+        slider.setBoundaries(min,max);
+        int step=(int) Math.max((max*1.0-min)/100,1);
+        slider.setStep(step);
     }
 
     public Pair<Integer,Integer> getValue(){

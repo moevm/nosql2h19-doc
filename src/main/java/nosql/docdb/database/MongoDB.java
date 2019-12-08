@@ -182,6 +182,38 @@ public class MongoDB{
         ).stream().findFirst();
     }
 
+    public Optional<Pair<Integer,Integer>> getPageRange(){
+        return getRange("pageCount",DbDocument::getPageCount);
+    }
+
+    public Optional<Pair<Integer,Integer>> getSizeRange(){
+        return getRange("size",d-> Math.toIntExact(d.getSize()));
+    }
+
+    public Optional<Pair<Integer,Integer>> getRange(String field, Function<DbDocument,Integer> extractor){
+        Optional<Integer> minPages=loadDocuments(
+                Query.builder()
+                        .sortField(field)
+                        .sortDirection(Query.SortDirection.ASCENDING)
+                        .limit(1)
+                        .build()
+        ).stream()
+        .findFirst()
+        .map(extractor);
+
+        Optional<Integer> maxPages=loadDocuments(
+                Query.builder()
+                        .sortField(field)
+                        .sortDirection(Query.SortDirection.DESCENDING)
+                        .limit(1)
+                        .build()
+        ).stream()
+        .findFirst()
+        .map(extractor);
+
+        return minPages.flatMap(min->maxPages.map(max->Pair.of(min,max)));
+    }
+
     public Future<?> exportToZip(OutputStream os) {
         ExecutorService es= Executors.newFixedThreadPool(1);
         Future<?> task=es.submit(()->{
@@ -379,7 +411,8 @@ public class MongoDB{
                 .map(d-> d.getLeft().getName()+": "+d.getRight())
                 .forEach(System.out::println);
 
-
+        System.out.println(db.getPageRange());
+        System.out.println(db.getSizeRange());
 
         //System.out.println(db.getImagesAndPages(Query.builder().build()));
         //System.out.println(db.getTablesAndPages(Query.builder().build()));
