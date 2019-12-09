@@ -52,8 +52,8 @@
         var resArray = [];
         for(var i =0 ;i<dataCur.xs.length;i++){
             arr = [];
-            arr.push(parseInt(dataCur.xs[i]));
-            arr.push(parseInt(dataCur.ys[i]));
+            arr.push(dataCur.xs[i]);
+            arr.push(dataCur.ys[i]);
             resArray.push(arr);
         }
         resArray.sort(function(a, b) {
