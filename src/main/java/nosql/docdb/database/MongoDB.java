@@ -250,6 +250,8 @@ public class MongoDB{
     }
 
     public void importFromZip(String filePath) throws IOException {
+        gridFSBucket.drop();
+        collection.drop();
         try(ZipFile zf=new ZipFile(filePath)) {
             InputStream is=zf.getInputStream(new ZipEntry("content"));
             List<String> ids=GSON.fromJson(new InputStreamReader(is),new TypeToken<List<String>>(){}.getType());

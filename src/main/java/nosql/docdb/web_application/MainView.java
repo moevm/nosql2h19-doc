@@ -11,7 +11,7 @@ import nosql.docdb.web_application.statistic_window.StatisticWindowNew;
 import java.io.ByteArrayInputStream;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Optional;
+import java.util.List;
 
 public class MainView extends VerticalLayout {
     private final BrowserFrame previewFrame;
@@ -44,8 +44,6 @@ public class MainView extends VerticalLayout {
                 NumberFormat formatter = new DecimalFormat("#0.00");
                 return formatter.format(d.getSize()/1024.0/1024);
             }).setCaption("Объем документа, Мб");
-
-            setItems(mongoDB.loadDocuments(MongoDB.Query.builder().limit(1000).build()));
 
             addSelectionListener(e->{
                 e.getFirstSelectedItem()
@@ -81,7 +79,7 @@ public class MainView extends VerticalLayout {
         filterButton.setStyleName("i-hPadding3 small i-small");
 
         searchInTextCheckBox = new CheckBox("Искать в тексте");
-        countOfDocumentLabel =new Label("Количество документов: "+mongoDB.getCountOfDocuments());
+        countOfDocumentLabel =new Label();
         exportDB = new Button("Страница администратора");
         exportDB.setStyleName("i-hPadding3 small i-small");
         showStatisticButton = new Button( "Статистика");
@@ -99,8 +97,9 @@ public class MainView extends VerticalLayout {
         searchButton=new Button("Поиск",e->{
             MongoDB.Query query= readQuery();
             System.out.println(query);
-            countOfDocumentLabel.setValue("Количество документов: "+mongoDB.getCountOfDocuments());
-            resultsGrid.setItems(mongoDB.loadDocuments(query));
+            List<DbDocument> dbDocuments = mongoDB.loadDocuments(query);
+            resultsGrid.setItems(dbDocuments);
+            countOfDocumentLabel.setValue("Количество документов: "+dbDocuments.size());
         });
 
         HorizontalSplitPanel horizontalSplit=new HorizontalSplitPanel(){{
@@ -127,8 +126,11 @@ public class MainView extends VerticalLayout {
             setSecondComponent(previewFrame);
         }};
 
-
         addComponent(horizontalSplit);
+
+        List<DbDocument> dbDocuments=mongoDB.loadDocuments(MongoDB.Query.builder().limit(1000).build());
+        resultsGrid.setItems(dbDocuments);
+        countOfDocumentLabel.setValue("Количество документов: "+dbDocuments.size());
     }
 
     private MongoDB.Query readQuery(){
