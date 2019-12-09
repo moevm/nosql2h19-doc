@@ -18,5 +18,6 @@ RUN locale-gen ru_RU.UTF-8 && dpkg-reconfigure locales
 
 COPY . /opt/docdb
 RUN service mongodb start &&\
-    java -jar /opt/docdb/docdb-1.0-SNAPSHOT-jar-with-dependencies.jar import opt/docdb/export.zip
-CMD service mongodb start && java -jar /opt/docdb/docdb-1.0-SNAPSHOT-jar-with-dependencies.jar
+    cd /opt/docdb &&\
+    java -jar docdb-1.0-SNAPSHOT-jar-with-dependencies.jar import export.zip
+CMD service mongodb start && cd /opt/docdb && java -jar docdb-1.0-SNAPSHOT-jar-with-dependencies.jar

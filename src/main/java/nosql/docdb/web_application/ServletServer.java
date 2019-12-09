@@ -7,12 +7,17 @@ import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.resource.Resource;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ServletServer {
-    public static void startServer(){
+    public static void startServer() throws IOException, URISyntaxException {
         Server server = new Server(8181);
 
         ServletContextHandler vaadinHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
@@ -23,8 +28,12 @@ public class ServletServer {
 
         ServletContextHandler resourceContextHandler=new ServletContextHandler(ServletContextHandler.SESSIONS);
         resourceContextHandler.setContextPath("/static");
-        ServletHolder resourceHolder=new ServletHolder(new DefaultServlet());
-        resourceContextHandler.addServlet(resourceHolder,"/*");
+
+        URI staticResourceFolder=URI.create("file:"+getWorkingDirectory()+"/static/");
+        System.out.println("static resource folder: "+staticResourceFolder);
+        resourceContextHandler.setBaseResource(Resource.newResource(staticResourceFolder));
+
+        resourceContextHandler.addServlet(DefaultServlet.class,"/");
 
         HandlerList handlers=new HandlerList();
         handlers.setHandlers(new Handler[]{vaadinHandler,resourceContextHandler});
@@ -38,5 +47,9 @@ public class ServletServer {
         } catch (Exception ex) {
             Logger.getLogger(ServletServer.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    private static String getWorkingDirectory() throws URISyntaxException {
+        return new File(ServletServer.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile().getAbsolutePath();
     }
 }
