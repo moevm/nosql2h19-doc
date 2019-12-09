@@ -10,6 +10,7 @@ public class Application {
     public static void main(String[] args) {
         if(args.length==2&&args[0].equals("import")){
             new MongoDB().importFromZip(args[1]);
+            System.out.println("Импорт завершен");
         }else {
             ServletServer.startServer();
         }

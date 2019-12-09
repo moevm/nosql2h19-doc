@@ -17,7 +17,7 @@ import nosql.docdb.utils.FileUtils;
 import nosql.docdb.utils.Utils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import org.bson.*;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 

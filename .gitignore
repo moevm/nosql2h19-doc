@@ -1,3 +1,5 @@
 /target
 /.idea
+/docker_image/static
+/docker_image/docdb-1.0-SNAPSHOT-jar-with-dependencies.jar
 nosql2h19-doc.iml
